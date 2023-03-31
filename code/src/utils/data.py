@@ -13,6 +13,11 @@ def getConfig(name):
     with open(os.path.join('pipe', name + '_config.json'), 'r', encoding="utf-8") as f:
         data = json.load(f)
         return data
+    
+def getDict(name):
+    with open(os.path.join(os.path.join('data', 'json', name+'.json')), 'r', encoding="utf-8") as f:
+        data = json.load(f)
+        return data
 
 def getDataPandas():
     data = pd.read_json(os.path.join('data', 'json', 'data.json'))
@@ -22,8 +27,7 @@ def writePandas(name, data):
     data = data.to_dict(orient='records')
     with open(os.path.join('data', 'json', name+'.json'), 'w+', encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
-    
-def writeDataPandas(data):
-    Data = data.to_dict(orient='records')
-    with open(os.path.join('data', 'json', 'data.json'), 'w+', encoding="utf-8") as f:
+        
+def writeData(name, data):
+    with open(os.path.join('data', 'json', name+'.json'), 'w+', encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
