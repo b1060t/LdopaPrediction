@@ -1,0 +1,29 @@
+import json
+import os
+import os.path
+import pandas as pd
+import nilearn as nil
+import numpy as np
+
+def getPandas(name):
+    data = pd.read_json(os.path.join('data', 'json', name+'.json'))
+    return data
+
+def getConfig(name):
+    with open(os.path.join('pipe', name + '_config.json'), 'r', encoding="utf-8") as f:
+        data = json.load(f)
+        return data
+
+def getDataPandas():
+    data = pd.read_json(os.path.join('data', 'json', 'data.json'))
+    return data
+
+def writePandas(name, data):
+    data = data.to_dict(orient='records')
+    with open(os.path.join('data', 'json', name+'.json'), 'w+', encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+    
+def writeDataPandas(data):
+    Data = data.to_dict(orient='records')
+    with open(os.path.join('data', 'json', 'data.json'), 'w+', encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
