@@ -52,7 +52,7 @@ def mvRaw(meta):
         
 
 
-def preprocFSL():
+def preprocFSL(file_name):
     from nipype.pipeline.engine import Workflow, Node
     from nipype import Function
     import nipype.interfaces.fsl as fsl
@@ -63,7 +63,7 @@ def preprocFSL():
     from nipype.interfaces.spm import Smooth
     import nipype.interfaces.io as nio
     
-    data = getPandas('pat_data')
+    data = getPandas('file_name')
 
     def gm_extract(pve_files):
         return pve_files[1]
@@ -145,4 +145,4 @@ def preprocFSL():
         (msk, sinker, [('out_file', '@masked_smoothed_file')]),
     ])
 
-    wf.run(plugin='MultiProc', plugin_args={'n_procs': 16})
+    wf.run()

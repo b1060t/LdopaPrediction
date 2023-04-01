@@ -2,8 +2,6 @@ import json
 import os
 import os.path
 import pandas as pd
-import nilearn as nil
-import numpy as np
 
 def getPandas(name):
     data = pd.read_json(os.path.join('data', 'json', name+'.json'))
