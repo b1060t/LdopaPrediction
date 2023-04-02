@@ -8,7 +8,7 @@ def getPandas(name):
     return data
 
 def getConfig(name):
-    with open(os.path.join('pipe', name + '_config.json'), 'r', encoding="utf-8") as f:
+    with open(os.path.join('config', name+'.json'), 'r', encoding="utf-8") as f:
         data = json.load(f)
         return data
     
@@ -28,4 +28,8 @@ def writePandas(name, data):
         
 def writeData(name, data):
     with open(os.path.join('data', 'json', name+'.json'), 'w+', encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+        
+def writeConfig(name, data):
+    with open(os.path.join('config', name+'.json'), 'w+', encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)

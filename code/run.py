@@ -1,8 +1,6 @@
-from process.clinic_data import writeClinic
-from process.img_data import imgRedir, preprocFSL, preprocCAT12
-from process.pat_data import combinePatData
+from code.process.preproc_img import imgRedir, preprocFSL, preprocCAT12
 import os
 os.chdir('..')
 
 #preprocCAT12('hc_data')
-preprocFSL('pat_data')
+#preprocFSL('pat_data')

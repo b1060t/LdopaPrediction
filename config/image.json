@@ -1,0 +1,60 @@
+{
+    "task":
+    {
+        "t1_pca":
+        {
+            "params":
+            {
+                "n_components": 0.8,
+                "pca_random_state": 1,
+                "img_path_tag": "T1_MNI_PATH"
+            }
+        },
+        "gm_pca":
+        {
+            "params":
+            {
+                "n_components": 0.8,
+                "pca_random_state": 1,
+                "img_path_tag": "T1_GM_PATH"
+            }
+        },
+        "wm_pca":
+        {
+            "params":
+            {
+                "n_components": 0.8,
+                "pca_random_state": 1,
+                "img_path_tag": "T1_WM_PATH"
+            }
+        },
+        "t1_radiomic_full":
+        {
+            "params":
+            {
+                "json_tag": "data_radiomic_full"
+            }
+        },
+        "t1_radiomic":
+        {
+            "params":
+            {
+                "json_tag": "data_radiomic"
+            }
+        },
+        "gm_radiomic":
+        {
+            "params":
+            {
+                "json_tag": "data_gm_radiomic"
+            }
+        },
+        "tiv_gmv":
+        {
+            "params":
+            {
+                "volume_tag": ["TIV", "GM_VOL"]
+            }
+        }
+    }
+}
