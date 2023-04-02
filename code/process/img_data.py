@@ -107,16 +107,15 @@ def preprocFSL(file_name):
     msk = Node(ApplyMask(), name='msk')
     msk.inputs.mask_file = os.path.abspath(os.path.join('data', 'bin', 'mask.nii'))
 
-    sinker = Node(nio.DataSink(infields=['key']), name='sinker')
+    sinker = Node(nio.DataSink(), name='sinker')
     sinker.inputs.base_directory = os.path.abspath(os.path.join('data', 'subj'))
-    sinker.parameterization = False
+    sinker.inputs.parameterization = False
     sinker.inputs.regexp_substitutions = [
         ('raw_brain', 'brain'),
         ('transformWarped', 'reg'),
         ('pve_0', 'csf'),
         ('pve_1', 'gm'),
         ('pve_2', 'wm'),
-        ('_key_', ''),
     ]
 
     wf.connect([
@@ -136,11 +135,11 @@ def preprocFSL(file_name):
 
     wf.run()
     
-    data['ANTs_Reg'] = data['IMG_ROOT'] + os.sep + 'reg.nii.gz'
-    data['FSL_GM'] = data['IMG_ROOT'] + os.sep + 'reg_gm.nii'
-    data['FSL_WM'] = data['IMG_ROOT'] + os.sep + 'reg_wm.nii'
-    data['FSL_CSF'] = data['IMG_ROOT'] + os.sep + 'reg_csf.nii'
-    data['FSL_SGM'] = data['IMG_ROOT'] + os.sep + 'sreg_gm_masked.nii'
+    data['ANTs_Reg'] = data['IMG_ROOT'] + os.sep + 'fsl' + os.sep + 'reg.nii.gz'
+    data['FSL_GM'] = data['IMG_ROOT'] + os.sep + 'fsl' + os.sep + 'reg_gm.nii'
+    data['FSL_WM'] = data['IMG_ROOT'] + os.sep + 'fsl' + os.sep + 'reg_wm.nii'
+    data['FSL_CSF'] = data['IMG_ROOT'] + os.sep + 'fsl' + os.sep + 'reg_csf.nii'
+    data['FSL_SGM'] = data['IMG_ROOT'] + os.sep + 'fsl' + os.sep + 'sreg_gm_masked.nii'
     
     writePandas(file_name, data)
 
@@ -171,6 +170,7 @@ def preprocCAT12(file_name):
     }
     
     seg = Node(CAT12Segment(), name='seg')
+    #CAT12Segment options?
     
     sink = Node(nio.DataSink(), name='sink')
     sink.inputs.base_directory = os.path.abspath(os.path.join('data', 'subj'))
@@ -200,6 +200,10 @@ def preprocCAT12(file_name):
     
     wf.run()
     
-    #data['ANTs_Reg'] = data['IMG_ROOT'] + os.sep + 'reg.nii.gz'
+    data['CAT12_GM'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'mwp1raw.nii'
+    data['CAT12_WM'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'mwp2raw.nii'
+    data['CAT12_CSF'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'mwp3raw.nii'
+    
+    #TODO: surface, tiv extraction from report
     
     writePandas(file_name, data)

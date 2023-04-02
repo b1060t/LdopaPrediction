@@ -4,4 +4,5 @@ from process.pat_data import combinePatData
 import os
 os.chdir('..')
 
-preprocCAT12('hc_data')
+#preprocCAT12('hc_data')
+preprocFSL('pat_data')
