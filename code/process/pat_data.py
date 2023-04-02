@@ -19,6 +19,7 @@ def genHCData():
     meta = getPandas('img_raw')
     hc_meta = meta[meta['Group'] == 'Control']
     pd.options.mode.chained_assignment = None
+    hc_meta['IMG_ROOT'] = hc_meta['KEY'].apply(lambda s: os.path.join('data', 'subj', s))
     hc_meta['Sex'] = 1 * (hc_meta['Sex'] == 'M')
     hc_meta.rename(columns={'Age': 'AGE', 'Sex': 'SEX'}, inplace=True)
     writePandas('hc_data', hc_meta)

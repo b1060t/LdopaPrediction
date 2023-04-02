@@ -63,7 +63,7 @@ def preprocFSL(file_name):
     from nipype.interfaces.spm import Smooth
     import nipype.interfaces.io as nio
     
-    data = getPandas('file_name')
+    data = getPandas(file_name)
 
     def gm_extract(pve_files):
         return pve_files[1]
@@ -109,18 +109,7 @@ def preprocFSL(file_name):
 
     sinker = Node(nio.DataSink(infields=['key']), name='sinker')
     sinker.inputs.base_directory = os.path.abspath(os.path.join('data', 'subj'))
-    # bet_replace = [('_bet'+str(i), os.path.join(key_list[i], 'preproc', 'fsl')) for i in range(len(key_list))]
-    # reg_replace = [('_reg'+str(i), os.path.join(key_list[i], 'preproc', 'fsl')) for i in range(len(key_list))]
-    # fslseg_replace = [('_fslseg'+str(i), os.path.join(key_list[i], 'preproc', 'fsl')) for i in range(len(key_list))]
-    # msk_replace = [('_msk'+str(i), os.path.join(key_list[i], 'preproc', 'fsl')) for i in range(len(key_list))]
-    # substitutions = [
-    #     ('raw_brain', 'brain'),
-    #     ('transformWarped', 'reg'),
-    #     ('pve_0', 'csf'),
-    #     ('pve_1', 'gm'),
-    #     ('pve_2', 'wm'),
-    # ]
-    # sinker.inputs.regexp_substitutions = bet_replace + reg_replace + fslseg_replace + msk_replace + substitutions
+    sinker.parameterization = False
     sinker.inputs.regexp_substitutions = [
         ('raw_brain', 'brain'),
         ('transformWarped', 'reg'),
@@ -138,11 +127,79 @@ def preprocFSL(file_name):
         (fslseg, gmextract, [('partial_volume_files', 'pve_files')]),
         (gmextract, smooth, [('gm_file', 'in_files')]),
         (smooth, msk, [('smoothed_files', 'in_file')]),
-        #(info_src, sinker, [('key', 'container')]),
-        (bet, sinker, [('out_file', '@out_file')]),
-        (reg, sinker, [('warped_image', '@warped_image')]),
-        (fslseg, sinker, [('partial_volume_files', '@partial_volume_files')]),
-        (msk, sinker, [('out_file', '@masked_smoothed_file')]),
+        (info_src, sinker, [('key', 'container')]),
+        (bet, sinker, [('out_file', 'fsl.@out_file')]),
+        (reg, sinker, [('warped_image', 'fsl.@warped_image')]),
+        (fslseg, sinker, [('partial_volume_files', 'fsl.@partial_volume_files')]),
+        (msk, sinker, [('out_file', 'fsl.@masked_smoothed_file')]),
     ])
 
     wf.run()
+    
+    data['ANTs_Reg'] = data['IMG_ROOT'] + os.sep + 'reg.nii.gz'
+    data['FSL_GM'] = data['IMG_ROOT'] + os.sep + 'reg_gm.nii'
+    data['FSL_WM'] = data['IMG_ROOT'] + os.sep + 'reg_wm.nii'
+    data['FSL_CSF'] = data['IMG_ROOT'] + os.sep + 'reg_csf.nii'
+    data['FSL_SGM'] = data['IMG_ROOT'] + os.sep + 'sreg_gm_masked.nii'
+    
+    writePandas(file_name, data)
+
+def preprocCAT12(file_name):
+    from nipype.pipeline.engine import Workflow, Node
+    from nipype.interfaces.cat12.preprocess import CAT12Segment
+    import nipype.interfaces.utility as util
+    import nipype.interfaces.io as nio
+    
+    data = getPandas(file_name)
+
+    key_list = data['KEY'].tolist()
+    
+    wf = Workflow(name='cat12segment', base_dir=os.path.abspath('tmp'))
+    
+    info_src = Node(util.IdentityInterface(fields=['key']), name='info_src')
+    info_src.iterables = ('key', key_list)
+    
+    raw_src = Node(nio.DataGrabber(infields=['key'], outfields=['raw']), name='raw_src')
+    raw_src.inputs.base_directory = os.path.abspath(os.path.join('data', 'subj'))
+    raw_src.inputs.sort_filelist = False
+    raw_src.inputs.template = '*'
+    raw_src.inputs.template_args = {
+        'raw': [['key']]
+    }
+    raw_src.inputs.field_template = {
+        'raw': os.path.join('%s', 'raw', 'raw.nii')
+    }
+    
+    seg = Node(CAT12Segment(), name='seg')
+    
+    sink = Node(nio.DataSink(), name='sink')
+    sink.inputs.base_directory = os.path.abspath(os.path.join('data', 'subj'))
+    sink.inputs.parameterization = False
+    
+    wf.connect([
+        (info_src, raw_src, [('key', 'key')]),
+        (raw_src, seg, [('raw', 'in_files')]),
+        (info_src, sink, [('key', 'container')]),
+        (seg, sink, [
+            ('gm_modulated_image', 'cat12.mri.@gm'),
+            ('wm_modulated_image', 'cat12.mri.@wm'),
+            ('csf_modulated_image', 'cat12.mri.@csf'),
+            ('mri_images', 'cat12.mri.@mri_images'),
+            ('label_files', 'cat12.label.@label_files'),
+            ('label_roi', 'cat12.label.@label_roi'),
+            ('label_rois', 'cat12.label.@label_rois'),
+            ('lh_central_surface', 'cat12.surf.@lh_central_surface'),
+            ('lh_sphere_surface', 'cat12.surf.@lh_sphere_surface'),
+            ('rh_central_surface', 'cat12.surf.@rh_central_surface'),
+            ('rh_sphere_surface', 'cat12.surf.@rh_sphere_surface'),
+            ('report_files', 'cat12.report.@report_files'),
+            ('report', 'cat12.report.@report'),
+            ('surface_files', 'cat12.surf.@surface_files'),
+            ]),
+    ])
+    
+    wf.run()
+    
+    #data['ANTs_Reg'] = data['IMG_ROOT'] + os.sep + 'reg.nii.gz'
+    
+    writePandas(file_name, data)

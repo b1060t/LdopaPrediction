@@ -1,5 +1,6 @@
 data
 tmp
+PD25*
 .ipynb_checkpoints
 ref.py
 **/__pycache__
