@@ -204,6 +204,7 @@ def preprocCAT12(file_name):
     data['CAT12_WM'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'mwp2raw.nii'
     data['CAT12_CSF'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'mwp3raw.nii'
     
+    # Whole brain volume: saved in xxx_data.json
     from xml.dom import minidom
     report_list = list(data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'report' + os.sep + 'cat_raw.xml')
     vol_list = []
@@ -218,6 +219,100 @@ def preprocCAT12(file_name):
     vol_list = pd.DataFrame(vol_list)
     data = pd.concat([data, vol_list], axis=1)
     
-    #TODO: surface, tiv extraction from report
+    # ROI volume: saved in xxx_roivol.json
+    label_list = list(data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'label' + os.sep + 'catROI_raw.xml')
+    label_info = []
+    for path in label_list:
+        xmldoc = minidom.parse(path)
+        
+        # Cobra
+        cobra = xmldoc.getElementsByTagName('cobra')[0]
+        names = cobra.getElementsByTagName('names')[0].getElementsByTagName('item')
+        names = [x.childNodes[0].data for x in names]
+        vgm = cobra.getElementsByTagName('data')[0].getElementsByTagName('Vgm')[0]
+        vgm = [float(x) for x in vgm.childNodes[0].data[1:-1].split(';')]
+        vwm = cobra.getElementsByTagName('data')[0].getElementsByTagName('Vwm')[0]
+        vwm = [float(x) for x in vwm.childNodes[0].data[1:-1].split(';')]
+        gm_col = ['cobra_gm_' + x for x in names]
+        wm_col = ['cobra_wm_' + x for x in names]
+        rec = pd.Series(vgm + vwm, index=gm_col+wm_col)
+        
+        # Hammers
+        hammers = xmldoc.getElementsByTagName('hammers')[0]
+        names = hammers.getElementsByTagName('names')[0].getElementsByTagName('item')
+        names = [x.childNodes[0].data for x in names]
+        vcsf = hammers.getElementsByTagName('data')[0].getElementsByTagName('Vcsf')[0]
+        vcsf = [float(x) for x in vcsf.childNodes[0].data[1:-1].split(';')]
+        vgm = hammers.getElementsByTagName('data')[0].getElementsByTagName('Vgm')[0]
+        vgm = [float(x) for x in vgm.childNodes[0].data[1:-1].split(';')]
+        vwm = hammers.getElementsByTagName('data')[0].getElementsByTagName('Vwm')[0]
+        vwm = [float(x) for x in vwm.childNodes[0].data[1:-1].split(';')]
+        csf_col = ['hammers_csf_' + x for x in names]
+        gm_col = ['hammers_gm_' + x for x in names]
+        wm_col = ['hammers_wm_' + x for x in names]
+        rec = pd.concat([rec, pd.Series(vcsf + vgm + vwm, index=csf_col+gm_col+wm_col)])
+        
+        # Lpba40
+        lpba40 = xmldoc.getElementsByTagName('lpba40')[0]
+        names = lpba40.getElementsByTagName('names')[0].getElementsByTagName('item')
+        names = [x.childNodes[0].data for x in names]
+        vgm = lpba40.getElementsByTagName('data')[0].getElementsByTagName('Vgm')[0]
+        vgm = [float(x) for x in vgm.childNodes[0].data[1:-1].split(';')]
+        vwm = lpba40.getElementsByTagName('data')[0].getElementsByTagName('Vwm')[0]
+        vwm = [float(x) for x in vwm.childNodes[0].data[1:-1].split(';')]
+        gm_col = ['lpba40_gm_' + x for x in names]
+        wm_col = ['lpba40_wm_' + x for x in names]
+        rec = pd.concat([rec, pd.Series(vgm + vwm, index=gm_col+wm_col)])
+        
+        # Neuromorphometrics
+        neuromorphometrics = xmldoc.getElementsByTagName('neuromorphometrics')[0]
+        names = neuromorphometrics.getElementsByTagName('names')[0].getElementsByTagName('item')
+        names = [x.childNodes[0].data for x in names]
+        vcsf = neuromorphometrics.getElementsByTagName('data')[0].getElementsByTagName('Vcsf')[0]
+        vcsf = [float(x) for x in vcsf.childNodes[0].data[1:-1].split(';')]
+        vgm = neuromorphometrics.getElementsByTagName('data')[0].getElementsByTagName('Vgm')[0]
+        vgm = [float(x) for x in vgm.childNodes[0].data[1:-1].split(';')]
+        vwm = neuromorphometrics.getElementsByTagName('data')[0].getElementsByTagName('Vwm')[0]
+        vwm = [float(x) for x in vwm.childNodes[0].data[1:-1].split(';')]
+        csf_col = ['neuromorphometrics_csf_' + x for x in names]
+        gm_col = ['neuromorphometrics_gm_' + x for x in names]
+        wm_col = ['neuromorphometrics_wm_' + x for x in names]
+        rec = pd.concat([rec, pd.Series(vcsf + vgm + vwm, index=csf_col+gm_col+wm_col)])
+        
+        # Suit
+        suit = xmldoc.getElementsByTagName('suit')[0]
+        names = suit.getElementsByTagName('names')[0].getElementsByTagName('item')
+        names = [x.childNodes[0].data for x in names]
+        vgm = suit.getElementsByTagName('data')[0].getElementsByTagName('Vgm')[0]
+        vgm = [float(x) for x in vgm.childNodes[0].data[1:-1].split(';')]
+        vwm = suit.getElementsByTagName('data')[0].getElementsByTagName('Vwm')[0]
+        vwm = [float(x) for x in vwm.childNodes[0].data[1:-1].split(';')]
+        gm_col = ['suit_gm_' + x for x in names]
+        wm_col = ['suit_wm_' + x for x in names]
+        rec = pd.concat([rec, pd.Series(vgm + vwm, index=gm_col+wm_col)])
+        
+        # Thalamic nuclei
+        thalamic_nuclei = xmldoc.getElementsByTagName('thalamic_nuclei')[0]
+        names = thalamic_nuclei.getElementsByTagName('names')[0].getElementsByTagName('item')
+        names = [x.childNodes[0].data for x in names]
+        vgm = thalamic_nuclei.getElementsByTagName('data')[0].getElementsByTagName('Vgm')[0]
+        vgm = [float(x) for x in vgm.childNodes[0].data[1:-1].split(';')]
+        gm_col = ['thalamic_nuclei_gm_' + x for x in names]
+        rec = pd.concat([rec, pd.Series(vgm, index=gm_col)])
+        
+        # Thalamus
+        thalamus = xmldoc.getElementsByTagName('thalamus')[0]
+        #ids = [int(x) for x in thalamus.getElementsByTagName('ids')[0].childNodes[0].data[1:-1].split(';')]
+        names = thalamus.getElementsByTagName('names')[0].getElementsByTagName('item')
+        names = [x.childNodes[0].data for x in names]
+        vgm = thalamus.getElementsByTagName('data')[0].getElementsByTagName('Vgm')[0]
+        vgm = [float(x) for x in vgm.childNodes[0].data[1:-1].split(';')]
+        gm_col = ['thalamus_gm_' + x for x in names]
+        rec = pd.concat([rec, pd.Series(vgm, index=gm_col)])
+
+        label_info.append(rec)
+    roi_df = pd.concat([data['KEY'], pd.DataFrame(label_info)], axis=1)
+    prefix = file_name.split('_')[0]
+    writePandas(prefix + '_roivol', roi_df)
     
     writePandas(file_name, data)
