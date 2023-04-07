@@ -31,3 +31,9 @@ def genTextureFeature(data, label):
     data_radiomic = data_radiomic.astype(float)
     data_radiomic['KEY'] = data['KEY']
     writePandas(label+'_radiomic', data_radiomic)
+    
+def dropByCorrelation(data):
+    pass
+
+def combineTexture(data):
+    pass

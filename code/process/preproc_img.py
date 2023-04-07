@@ -170,7 +170,7 @@ def preprocCAT12(file_name):
     }
     
     seg = Node(CAT12Segment(), name='seg')
-    #CAT12Segment options?
+    #seg.inputs.own_atlas = [os.path.abspath(os.path.join('data', 'bin', 'aal3.nii'))]
     
     sink = Node(nio.DataSink(), name='sink')
     sink.inputs.base_directory = os.path.abspath(os.path.join('data', 'subj'))
@@ -203,6 +203,20 @@ def preprocCAT12(file_name):
     data['CAT12_GM'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'mwp1raw.nii'
     data['CAT12_WM'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'mwp2raw.nii'
     data['CAT12_CSF'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'mwp3raw.nii'
+    
+    from xml.dom import minidom
+    report_list = list(data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'report' + os.sep + 'cat_raw.xml')
+    vol_list = []
+    for report in report_list:
+        root = minidom.parse(report).documentElement
+        tiv_str = root.getElementsByTagName('subjectmeasures')[1].getElementsByTagName('vol_TIV')[0].childNodes[0].data
+        vol_str = root.getElementsByTagName('subjectmeasures')[1].getElementsByTagName('vol_abs_CGW')[0].childNodes[0].data
+        tiv = float(tiv_str)
+        gm = float(vol_str.split(' ')[1])
+        wm = float(vol_str.split(' ')[2])
+        vol_list.append({'TIV': tiv, 'GM_VOL': gm, 'WM_VOL': wm})
+    vol_list = pd.DataFrame(vol_list)
+    data = pd.concat([data, vol_list], axis=1)
     
     #TODO: surface, tiv extraction from report
     
