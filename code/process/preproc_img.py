@@ -146,6 +146,8 @@ def preprocFSL(file_name):
 def preprocCAT12(file_name):
     from nipype.pipeline.engine import Workflow, Node
     from nipype.interfaces.cat12.preprocess import CAT12Segment
+    from nipype.interfaces.spm.preprocess import Smooth
+    from nipype.interfaces.fsl import ApplyMask
     import nipype.interfaces.utility as util
     import nipype.interfaces.io as nio
     
@@ -172,6 +174,12 @@ def preprocCAT12(file_name):
     seg = Node(CAT12Segment(), name='seg')
     #seg.inputs.own_atlas = [os.path.abspath(os.path.join('data', 'bin', 'aal3.nii'))]
     
+    smooth = Node(Smooth(), name='smooth')
+    smooth.inputs.fwhm = 4
+    
+    msk = Node(ApplyMask(), name='msk')
+    msk.inputs.mask_file = os.path.abspath(os.path.join('data', 'bin', 'mask.nii'))
+    
     sink = Node(nio.DataSink(), name='sink')
     sink.inputs.base_directory = os.path.abspath(os.path.join('data', 'subj'))
     sink.inputs.parameterization = False
@@ -180,6 +188,9 @@ def preprocCAT12(file_name):
         (info_src, raw_src, [('key', 'key')]),
         (raw_src, seg, [('raw', 'in_files')]),
         (info_src, sink, [('key', 'container')]),
+        (seg, smooth, [('gm_modulated_image', 'in_files')]),
+        (smooth, msk, [('smoothed_files', 'in_file')]),
+        (msk, sink, [('out_file', 'cat12.@masked_smoothed_file')]),
         (seg, sink, [
             ('gm_modulated_image', 'cat12.mri.@gm'),
             ('wm_modulated_image', 'cat12.mri.@wm'),
@@ -201,6 +212,7 @@ def preprocCAT12(file_name):
     wf.run()
     
     data['CAT12_GM'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'mwp1raw.nii'
+    data['CAT12_SGM'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'smwp1raw_masked.nii'
     data['CAT12_WM'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'mwp2raw.nii'
     data['CAT12_CSF'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'mwp3raw.nii'
     
