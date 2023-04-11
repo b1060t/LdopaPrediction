@@ -20,7 +20,8 @@
             "SEX"
         ],
         "y": [
-            "CAT"
+            "CAT",
+            "CAT_MDS"
         ]
     },
     "cont_tags": {
@@ -252,6 +253,16 @@
             205,
             206,
             212
+        ]
+    },
+    "features": {
+        "texture": [
+            {
+                "image": "pat_ANTs_Reg_radiomic",
+                "class": "CAT_MDS",
+                "threshold": 0.8,
+                "path": "data/json/pat_ANTs_Reg_radiomic_CAT_MDS_0.8.json"
+            }
         ]
     }
 }

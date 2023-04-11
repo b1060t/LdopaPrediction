@@ -143,7 +143,7 @@ def preprocFSL(file_name):
     
     writePandas(file_name, data)
 
-def preprocCAT12(file_name):
+def preprocCAT12(filename):
     from nipype.pipeline.engine import Workflow, Node
     from nipype.interfaces.cat12.preprocess import CAT12Segment
     from nipype.interfaces.spm.preprocess import Smooth
@@ -151,7 +151,7 @@ def preprocCAT12(file_name):
     import nipype.interfaces.utility as util
     import nipype.interfaces.io as nio
     
-    data = getPandas(file_name)
+    data = getPandas(filename)
 
     key_list = data['KEY'].tolist()
     
@@ -178,7 +178,7 @@ def preprocCAT12(file_name):
     smooth.inputs.fwhm = 4
     
     msk = Node(ApplyMask(), name='msk')
-    msk.inputs.mask_file = os.path.abspath(os.path.join('data', 'bin', 'mask.nii'))
+    msk.inputs.mask_file = os.path.abspath(os.path.join('data', 'bin', 'brainmask_GMtight.nii'))
     
     sink = Node(nio.DataSink(), name='sink')
     sink.inputs.base_directory = os.path.abspath(os.path.join('data', 'subj'))
@@ -324,7 +324,7 @@ def preprocCAT12(file_name):
 
         label_info.append(rec)
     roi_df = pd.concat([data['KEY'], pd.DataFrame(label_info)], axis=1)
-    prefix = file_name.split('_')[0]
+    prefix = filename.split('_')[0]
     writePandas(prefix + '_roivol', roi_df)
     
-    writePandas(file_name, data)
+    writePandas(filename, data)

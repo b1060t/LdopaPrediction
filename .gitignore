@@ -3,4 +3,5 @@ tmp
 PD25*
 .ipynb_checkpoints
 ref.py
+test*
 **/__pycache__
