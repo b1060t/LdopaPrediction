@@ -7,7 +7,7 @@ from xgboost.sklearn import XGBClassifier
 
 import sys
 sys.path.append('..')
-from feature import gen_pca, load_radiomics, load_volume
+from src.model.feature import gen_pca, load_radiomics, load_volume, load_roivol, load_surface
 
 import scikitplot as skplt
 import matplotlib.pyplot as plt
@@ -62,5 +62,7 @@ Feature_LUT = {
     't1_radiomic': load_radiomics,
     't1_radiomic_full': load_radiomics,
     'gm_radiomic': load_radiomics,
-    'tiv_gmv': load_volume
+    'tiv_gmv': load_volume,
+    'roi_volume': load_roivol,
+    'surf_info': load_surface
 }

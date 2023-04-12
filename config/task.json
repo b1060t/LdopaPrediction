@@ -30,14 +30,14 @@
         },
         "classification/2":
         {
-            "output": "CAT",
+            "output": "CAT_MDS",
             "continuous": false,
             "stratify": true,
             "models": [
                 {
                     "name": "svc",
                     "params": {
-                        "kernel": ["rbf", "poly", "sigmoid"],
+                        "kernel": ["rbf", "poly", "sigmoid", "linear"],
                         "C": [0.1, 1, 10, 100],
                         "degree": [3],
                         "gamma": ["scale"],
@@ -61,32 +61,6 @@
                         "n_estimators": [25, 50, 100, 200, 400],
                         "missing": [-999],
                         "random_state": [1]
-                    }
-                },
-                {
-                    "name": "knn",
-                    "params": {
-                        "n_neighbors": [3, 5, 7],
-                        "weights": ["uniform", "distance"],
-                        "algorithm": ["auto", "ball_tree", "kd_tree", "brute"],
-                        "leaf_size": [10, 20, 30],
-                        "p": [1, 2],
-                        "metric": ["minkowski"]
-                    }
-                },
-                {
-                    "name": "logistic",
-                    "params": {
-                        "penalty": ["elasticnet"],
-                        "solver": ["saga"],
-                        "random_state": [1],
-                        "l1_ratio": [0, 0.2, 0.5, 0.7, 0.9, 1]
-                    }
-                },
-                {
-                    "name": "nb",
-                    "params": {
-                        "var_smoothing": [1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
                     }
                 }
             ],

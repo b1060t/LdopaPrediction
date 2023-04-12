@@ -48,3 +48,19 @@ def load_volume(data, train_idx, test_idx, params):
     volume_train = df_volume.iloc[train_idx]
     volume_test = df_volume.iloc[test_idx]
     return volume_train, volume_test
+
+def load_roivol(data, train_idx, test_idx, params):
+    df_roivol = getPandas(params['json_tag'])
+    # only use columns contains hammer
+    #df_roivol = df_roivol[df_roivol.columns[df_roivol.columns.str.contains('cobra')]]
+    df_roivol = df_roivol.drop(['KEY'], axis=1)
+    roivol_train = df_roivol.iloc[train_idx]
+    roivol_test = df_roivol.iloc[test_idx]
+    return roivol_train, roivol_test
+
+def load_surface(data, train_idx, test_idx, params):
+    df_surface = getPandas(params['json_tag'])
+    df_surface = df_surface.drop(['KEY'], axis=1)
+    surface_train = df_surface.iloc[train_idx]
+    surface_test = df_surface.iloc[test_idx]
+    return surface_train, surface_test

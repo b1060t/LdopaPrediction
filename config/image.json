@@ -32,14 +32,14 @@
         {
             "params":
             {
-                "json_tag": "data_radiomic_full"
+                "json_tag": "pat_ANTs_Reg_radiomic"
             }
         },
         "t1_radiomic":
         {
             "params":
             {
-                "json_tag": "data_radiomic"
+                "json_tag": "pat_ANTs_Reg_radiomic"
             }
         },
         "gm_radiomic":
@@ -53,7 +53,22 @@
         {
             "params":
             {
-                "volume_tag": ["TIV", "GM_VOL"]
+                "volume_tag": ["TIV", "GM_VOL", "WM_VOL"]
+            }
+        },
+        "roi_volume":
+        {
+            "params":
+            {
+                "json_tag": "pat_roivol",
+                "drop_tag": ["csf"]
+            }
+        },
+        "surf_info":
+        {
+            "params":
+            {
+                "json_tag": "pat_roisurf"
             }
         }
     }

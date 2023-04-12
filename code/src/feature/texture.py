@@ -46,7 +46,7 @@ def dropByCorrelation(data_filename, radiomic_filename, y_label, threshold=0.8):
     config = getConfig('data')
     isCont = y_label in config['cont_tags']['y']
     rad = data_radiomic.copy()
-    rad = rad.iloc[config['indices']['train']].drop(['KEY'], axis=1)
+    rad = rad.iloc[config['indices']['pat']['train']].drop(['KEY'], axis=1)
     for tag, label in mask_tags.items():
         cor = abs(data_radiomic.filter(like=tag, axis=1).corr())
         print(tag)
@@ -54,7 +54,7 @@ def dropByCorrelation(data_filename, radiomic_filename, y_label, threshold=0.8):
         fig = plt.gcf()
         fig.savefig(os.path.join('data', 'img', 'texture', 'correlation', tag + '.png'))
         fig.clear()
-    y = data.iloc[config['indices']['train']][y_label].to_numpy()
+    y = data.iloc[config['indices']['pat']['train']][y_label].to_numpy()
     removal = []
     for tag, labels in mask_tags.items():
         if isCont:
