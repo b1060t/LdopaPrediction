@@ -30,7 +30,7 @@
         },
         "classification/2":
         {
-            "output": "CAT_MDS",
+            "output": "CAT",
             "continuous": false,
             "stratify": true,
             "models": [
@@ -38,7 +38,7 @@
                     "name": "svc",
                     "params": {
                         "kernel": ["rbf", "poly", "sigmoid", "linear"],
-                        "C": [0.1, 1, 10, 100],
+                        "C": [0.01, 0.1, 1],
                         "degree": [3],
                         "gamma": ["scale"],
                         "coef0": [0, 1],

@@ -12,11 +12,33 @@ def imgRedir():
 
     # Get image metadata file path
     xmllist = []
+    desclist = []
     for dirpath, dirnames, filenames in os.walk(os.path.join('data', 'raw', 'meta')):
         for filename in filenames:
             if dirpath == os.path.join('data', 'raw', 'meta'):
-                continue
-            xmllist.append(os.path.join(dirpath, filename))
+                desclist.append(os.path.join(dirpath, filename))
+            else:
+                xmllist.append(os.path.join(dirpath, filename))
+            
+    # Generate image description dataframe by PATNO, IMG_ID, and SERIES
+    descs = []
+    from xml.dom import minidom
+    for xml in desclist:
+        root = minidom.parse(xml).documentElement
+        subject = root.getElementsByTagName('subjectIdentifier')[0].childNodes[0].data
+        series = root.getElementsByTagName('seriesIdentifier')[0].childNodes[0].data
+        image = root.getElementsByTagName('imageUID')[0].childNodes[0].data
+        seq = root.getElementsByTagName('description')[0].childNodes[0].data
+        protocol = root.getElementsByTagName('protocol')
+        rec = {'PATNO': int(subject), 'IMG_ID': 'I'+str(image), 'SERIES': 'S'+str(series)}
+        for node in protocol:
+            term = node.getAttribute('term')
+            value = ''
+            if node.childNodes:
+                value = node.childNodes[0].data
+            rec[term] = value
+        descs.append(rec)
+    descs = pd.DataFrame(descs)
 
     # Generate image dataframe by PATNO and IMG_ID
     data = []
@@ -34,8 +56,9 @@ def imgRedir():
         data.append({'PATNO': int(subject), 'IMG_ID': str(image), 'SERIES': str(series), 'IMG_PATH': str(relative_path)})
     data = pd.DataFrame(data)
 
+    data = pd.merge(data, descs, on=['PATNO', 'IMG_ID', 'SERIES'], how='left')
     data = pd.merge(data, image_meta, on=['PATNO', 'IMG_ID'], how='left')
-    data = data[['PATNO', 'SERIES', 'IMG_ID', 'EVENT_ID', 'Group', 'Sex', 'Age', 'Acq Date', 'IMG_PATH']]
+    #data = data[['PATNO', 'SERIES', 'IMG_ID', 'EVENT_ID', 'Group', 'Sex', 'Age', 'Acq Date', 'IMG_PATH']]
     data['KEY'] = data['PATNO'].astype(str) + data['EVENT_ID'].astype(str) + data['IMG_ID'].astype(str)
     
     writePandas('img_raw', data)
@@ -47,6 +70,9 @@ def mvRaw(meta):
     import shutil
     for index, row in meta.iterrows():
         print(row['KEY'])
+        # if directory exists, skip it
+        if os.path.exists(os.path.join('data', 'subj', row['KEY'], 'raw')):
+            continue
         os.makedirs(os.path.join('data', 'subj', row['KEY'], 'raw'))
         shutil.copy(row['IMG_PATH'], os.path.join('data', 'subj', row['KEY'], 'raw', 'raw.nii'))
         
@@ -147,6 +173,8 @@ def preprocCAT12(filename):
     from nipype.pipeline.engine import Workflow, Node
     from nipype.interfaces.cat12.preprocess import CAT12Segment
     from nipype.interfaces.spm.preprocess import Smooth
+    import nipype.interfaces.fsl as fsl
+    fsl.FSLCommand.set_default_output_type('NIFTI')
     from nipype.interfaces.fsl import ApplyMask
     import nipype.interfaces.utility as util
     import nipype.interfaces.io as nio
@@ -211,8 +239,21 @@ def preprocCAT12(filename):
     
     wf.run()
     
+    # IQR check
+    iqr_list = []
+    from xml.dom import minidom
+    report_list = list(data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'report' + os.sep + 'cat_raw.xml')
+    for report in report_list:
+        root = minidom.parse(report).documentElement
+        iqr_str = root.getElementsByTagName('catlog')[0].getElementsByTagName('item')[-5].childNodes[0].data
+        iqr_str = iqr_str.split(' ')[4][:-1]
+        iqr_list.append({'IQR': float(iqr_str)})
+    iqr_list = pd.DataFrame(iqr_list)
+    data = pd.concat([data, iqr_list], axis=1)
+    #data = data[data['IQR'] >= 70].reset_index(drop=True)
+    
     data['CAT12_GM'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'mwp1raw.nii'
-    data['CAT12_SGM'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'smwp1raw_masked.nii'
+    data['CAT12_SGM'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'smwp1raw_masked.nii'
     data['CAT12_WM'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'mwp2raw.nii'
     data['CAT12_CSF'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'mwp3raw.nii'
     

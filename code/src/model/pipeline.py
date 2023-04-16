@@ -65,7 +65,7 @@ def run(dataname, TASKS, FEATURES, log_func):
             selected = mrmr_classif(X=x_img_train, y=y_train, K=50) if not isContinuous else mrmr_regression(X=x_img_train, y=y_train, K=50)
             log_func('Selected features: {}\n'.format(selected))
             ##LASSO
-            la = LassoCV(cv=5, random_state=0, max_iter=10000)
+            la = LassoCV(cv=5, random_state=1, max_iter=10000)
             la.fit(x_img_train[selected], y_train)
             log_func('Selected alpha: {}\n'.format(la.alpha_))
             la.fit(x_img_train[selected], y_train)
@@ -77,6 +77,13 @@ def run(dataname, TASKS, FEATURES, log_func):
             selector = selector.fit(X=x_img_train[selected], y=y_train)
             selected = np.array(selected)[selector.get_support()]
             log_func('Selected features: {}\n'.format(selected))
+            
+            # selected1 = ['rTHA_original_gldm_LargeDependenceHighGrayLevelEmphasis',
+            #             'rTHA_original_gldm_SmallDependenceLowGrayLevelEmphasis',
+            #             'rCAU_original_glcm_Idn',
+            #             'cobra_wm_lInfPostCerebLIX',
+            #             'cobra_gm_rFimbra',
+            #             'cobra_wm_lAntCerebLIII']
             
             x_img_train = x_img_train[selected]
             x_img_test = x_img_test[selected]
@@ -101,6 +108,10 @@ def run(dataname, TASKS, FEATURES, log_func):
             x_test_list = [x_clinic_test, x_clinic_img_test]
             info_list = ['Demo + Clinic:', 'Demo + Clinic + Img:']
             
+            # x_train_list = [x_clinic_img_train]
+            # x_test_list = [x_clinic_img_test]
+            # info_list = ['Demo + Clinic + Img:']
+            
             #Main loop
             for i in range(len(info_list)):
                 x_train = x_train_list[i]
@@ -123,11 +134,12 @@ def run(dataname, TASKS, FEATURES, log_func):
                         parameters,
                         n_jobs=5,
                         # StratifiedGroupKFold?
-                        cv=(StratifiedKFold(n_splits=5, shuffle=True, random_state=1) if task['stratify'] else KFold(n_splits=5, shuffle=True, random_state=1)),
+                        cv=(StratifiedKFold(n_splits=5, shuffle=True, random_state=2) if task['stratify'] else KFold(n_splits=5, shuffle=True, random_state=1)),
                         scoring=task['gridsearch_params']['scoring']
                     )
 
                     cv.fit(x_train, y_train.values.ravel())
+                    log_func('Best params: {}\n'.format(cv.best_params_))
                     model_instance = model(**cv.best_params_)
                     model_instance.fit(x_train, y_train.values.ravel())
                     

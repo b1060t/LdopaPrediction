@@ -109,6 +109,7 @@ def writeClinic():
     data['LEDD'] = data.apply(get_ledd, axis=1)
 
     data['INFODT'] = data['INFODT'].astype(str)
+    data.loc[data['KEY'] == '3826V04I395598', 'LEDD'] = 300
     data = data.dropna().reset_index(drop=True)
 
     writePandas('pat_clinic', data)

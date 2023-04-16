@@ -5,8 +5,9 @@ from src.utils.data import getPandas, writePandas
 import os
 os.chdir('..')
 
-#preprocCAT12('hc_data')
+preprocCAT12('pat_data')
 #preprocFSL('pat_data')
 #genTextureFeature('pat_data', 'ANTs_Reg')
 #dropByCorrelation('pat_data', 'pat_ANTs_Reg_radiomic', 'CAT_MDS')
 #surfCAT12('pat_data')
+#genTextureFeature('pat_data', 'ANTs_Reg')

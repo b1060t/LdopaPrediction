@@ -39,7 +39,7 @@
         {
             "params":
             {
-                "json_tag": "pat_ANTs_Reg_radiomic"
+                "json_tag": "data_radiomic_full_CAT_0.8"
             }
         },
         "gm_radiomic":
