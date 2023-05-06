@@ -15,7 +15,7 @@ from src.utils.data import getPandas, getConfig, getDict
 from src.model.lut import Model_LUT, Metrics_LUT, Feature_LUT, Plot_LUT
 from src.model.stats import stats_analyze
 
-def run(dataname, TASKS, FEATURES, log_func):
+def run(dataname, TASKS, FEATURES, log_func, plot_flag=True):
     data = getPandas(dataname)
     prefix = dataname.split('_')[0]
     task_config = getConfig('task')
@@ -69,7 +69,32 @@ def run(dataname, TASKS, FEATURES, log_func):
             la.fit(x_img_train[selected], y_train)
             log_func('Selected alpha: {}\n'.format(la.alpha_))
             la.fit(x_img_train[selected], y_train)
-            selected = np.array(selected)[np.abs(la.coef_)>0]
+            if plot_flag:
+                plt.semilogx(la.alphas_, la.mse_path_, ':')
+                plt.plot(
+                    la.alphas_ ,
+                    la.mse_path_.mean(axis=-1),
+                    "k",
+                    label="Average across the folds",
+                    linewidth=2,
+                )
+                plt.axvline(
+                    la.alpha_, linestyle="--", color="k", label="alpha: CV estimate"
+                )
+                plt.legend()
+                plt.ylabel('MSE')
+                plt.xlabel('alpha')
+                plt.show()
+                la = Lasso(alpha=la.alpha_)
+                la.fit(x_img_train[selected], y_train)
+                selected = np.array(selected)[np.abs(la.coef_)>0]
+                coef = np.array(la.coef_)[np.abs(la.coef_)>0]
+                sort_idx = coef.argsort()
+                plt.barh(selected[sort_idx], coef[sort_idx])
+                plt.xlabel('Importance')
+                plt.show()
+            else:
+                selected = np.array(selected)[np.abs(la.coef_)>0]
             log_func('Selected features: {}\n'.format(selected))
             if len(selected) > 2:
                 ##RFE
@@ -77,6 +102,22 @@ def run(dataname, TASKS, FEATURES, log_func):
                 selector = RFECV(est, min_features_to_select=1, cv=5, step=1)
                 selector = selector.fit(X=x_img_train[selected], y=y_train)
                 selected = np.array(selected)[selector.get_support()]
+                if plot_flag:
+                    n_scores = len(selector.cv_results_["mean_test_score"])
+                    plt.errorbar(
+                        range(1, n_scores+1),
+                        selector.cv_results_["mean_test_score"],
+                        yerr=selector.cv_results_["std_test_score"],
+                    )
+                    plt.xticks(range(1,n_scores+1))
+                    plt.xlabel("Number of features selected")
+                    plt.ylabel("Mean test accuracy")
+                    plt.show()
+                    coef = selector.estimator_.coef_[0]
+                    sort_idx = coef.argsort()
+                    plt.barh(selected[sort_idx], coef[sort_idx])
+                    plt.xlabel('Importance')
+                    plt.show()
                 log_func('Selected features: {}\n'.format(selected))
                 
             x_img_train = x_img_train[selected]
@@ -162,3 +203,12 @@ def run(dataname, TASKS, FEATURES, log_func):
                                                             metric_func(y_test_np, test_pred)
                                                             ))
                         log_func('{}\n'.format(ci_test.confidence_interval))
+                        plot_list = task['plot']
+                        if plot_flag:
+                            for plot in plot_list:
+                                plot_func = Plot_LUT[plot[0]]
+                                pred_func = model_instance.predict_proba if plot[1] else model_instance.predict
+                                train_pred = pred_func(x_train)
+                                test_pred = pred_func(x_test)
+                                plot_func(y_test[task['output']].to_numpy(), test_pred)
+                                plt.show()

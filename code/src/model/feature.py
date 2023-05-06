@@ -36,6 +36,20 @@ def gen_pca(data, train_idx, test_idx, params):
     pca_test = PCA_transform(vox[test_idx], pca)
     return pca_train, pca_test
 
+def gen_pca_malpem_vol(data, train_idx, test_idx, params):
+    vol_train, vol_test = load_malpemvol(data, train_idx, test_idx, params)
+    vol_test = np.reshape(vol_test, (vol_test.shape[0], -1))
+    pca_train, pca = PCA_fit_transform(vol_train, params)
+    pca_test = PCA_transform(vol_test, pca)
+    return pca_train, pca_test
+ 
+def gen_pca_cat12_vol(data, train_idx, test_idx, params):
+    vol_train, vol_test = load_roivol(data, train_idx, test_idx, params)
+    vol_test = np.reshape(vol_test, (vol_test.shape[0], -1))
+    pca_train, pca = PCA_fit_transform(vol_train, params)
+    pca_test = PCA_transform(vol_test, pca)
+    return pca_train, pca_test   
+
 def load_radiomics(data, train_idx, test_idx, params):
     df_radiomic = getPandas(params['json_tag'])
     df_radiomic = df_radiomic.drop(['KEY'], axis=1)
@@ -52,8 +66,8 @@ def load_volume(data, train_idx, test_idx, params):
 def load_roivol(data, train_idx, test_idx, params):
     df_roivol = getPandas(params['json_tag'])
     # only use columns contains hammer
-    df_roivol = df_roivol[df_roivol.columns[df_roivol.columns.str.contains('thalamus_gm')]]
-    #df_roivol = df_roivol.drop(['KEY'], axis=1)
+    #df_roivol = df_roivol[df_roivol.columns[df_roivol.columns.str.contains('thalamus_gm')]]
+    df_roivol = df_roivol.drop(['KEY'], axis=1)
     roivol_train = df_roivol.iloc[train_idx]
     roivol_test = df_roivol.iloc[test_idx]
     return roivol_train, roivol_test

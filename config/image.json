@@ -28,6 +28,24 @@
                 "img_path_tag": "T1_WM_PATH"
             }
         },
+        "vol_pca":
+        {
+            "params":
+            {
+                "n_components": 0.8,
+                "pca_random_state": 1,
+                "json_tag": "pat_malpem"
+            }
+        },
+        "vol_cat12_pca":
+        {
+            "params":
+            {
+                "n_components": 0.8,
+                "pca_random_state": 1,
+                "json_tag": "pat_roivol"
+            }
+        },
         "t1_radiomic_full":
         {
             "params":
