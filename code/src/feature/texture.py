@@ -5,7 +5,6 @@ import pandas as pd
 import os
 import os.path
 import sys
-from nilearn import image
 import radiomics
 import logging
 from radiomics import featureextractor
@@ -34,6 +33,9 @@ def genTextureFeature(filename, pathlabel):
     data_radiomic['KEY'] = data['KEY']
     prefix = filename.split('_')[0]
     writePandas(prefix+'_'+pathlabel+'_radiomic', data_radiomic)
+
+def genMalpemTextureFeature(filename, pathlabel):
+    pass
     
 def dropByCorrelation(data_filename, radiomic_filename, y_label, threshold=0.8):
     import matplotlib.pyplot as plt

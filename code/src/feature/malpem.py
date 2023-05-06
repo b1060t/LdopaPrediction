@@ -11,8 +11,6 @@ from src.utils.data import getDict, writePandas, getPandas, getConfig, writeConf
 
 def genMalpemFeature(filename):
     data = getPandas(filename)
-    conf = getConfig('data')
-    used_data = data.iloc[conf['indices']['pat']['train'] + conf['indices']['pat']['test']]
     def extract_malpem(rec):
         print('Extracting malpem features for ' + rec['KEY'] + '...')
         root = rec['IMG_ROOT']
@@ -25,9 +23,9 @@ def genMalpemFeature(filename):
             vol_data['KEY'] = key
             return vol_data
         else:
-            print('Malpem not exist for {}'.format(key))
-            return
+            return pd.DataFrame()
     # combine series to dataframe
-    rsts = used_data.apply(extract_malpem, axis=1)
+    rsts = data.apply(extract_malpem, axis=1)
     malpem_data = pd.concat(rsts.tolist(), ignore_index=True)
+    print(malpem_data.shape)
     writePandas('pat_malpem', malpem_data)

@@ -206,7 +206,7 @@ def preprocCAT12(filename):
     smooth.inputs.fwhm = 4
     
     msk = Node(ApplyMask(), name='msk')
-    msk.inputs.mask_file = os.path.abspath(os.path.join('data', 'bin', 'brainmask_GMtight.nii'))
+    msk.inputs.mask_file = os.path.abspath(os.path.join('data', 'bin', 'rbrainmask_T1.nii'))
     
     sink = Node(nio.DataSink(), name='sink')
     sink.inputs.base_directory = os.path.abspath(os.path.join('data', 'subj'))

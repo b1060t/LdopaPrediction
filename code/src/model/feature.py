@@ -77,8 +77,6 @@ def load_malpemvol(data, train_idx, test_idx, params):
     malpemvol_test = pd.DataFrame()
     for key in test_keys:
         malpemvol_test = malpemvol_test.append(df_malpemvol[df_malpemvol['KEY'] == key]) 
-    print(malpemvol_train['KEY'].tolist())
-    print(train_keys)
     malpemvol_train = malpemvol_train.drop(['KEY'], axis=1)
     malpemvol_test = malpemvol_test.drop(['KEY'], axis=1)
     return malpemvol_train, malpemvol_test
