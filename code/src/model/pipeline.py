@@ -71,20 +71,14 @@ def run(dataname, TASKS, FEATURES, log_func):
             la.fit(x_img_train[selected], y_train)
             selected = np.array(selected)[np.abs(la.coef_)>0]
             log_func('Selected features: {}\n'.format(selected))
-            ##RFE
-            est = LogisticRegression(random_state=1) #l2
-            selector = RFECV(est, min_features_to_select=1, cv=5, step=1)
-            selector = selector.fit(X=x_img_train[selected], y=y_train)
-            selected = np.array(selected)[selector.get_support()]
-            log_func('Selected features: {}\n'.format(selected))
-            
-            # selected1 = ['rTHA_original_gldm_LargeDependenceHighGrayLevelEmphasis',
-            #             'rTHA_original_gldm_SmallDependenceLowGrayLevelEmphasis',
-            #             'rCAU_original_glcm_Idn',
-            #             'cobra_wm_lInfPostCerebLIX',
-            #             'cobra_gm_rFimbra',
-            #             'cobra_wm_lAntCerebLIII']
-            
+            if len(selected) > 2:
+                ##RFE
+                est = LogisticRegression(random_state=1) #l2
+                selector = RFECV(est, min_features_to_select=1, cv=5, step=1)
+                selector = selector.fit(X=x_img_train[selected], y=y_train)
+                selected = np.array(selected)[selector.get_support()]
+                log_func('Selected features: {}\n'.format(selected))
+                
             x_img_train = x_img_train[selected]
             x_img_test = x_img_test[selected]
             
@@ -108,9 +102,9 @@ def run(dataname, TASKS, FEATURES, log_func):
             x_test_list = [x_clinic_test, x_clinic_img_test]
             info_list = ['Demo + Clinic:', 'Demo + Clinic + Img:']
             
-            # x_train_list = [x_clinic_img_train]
-            # x_test_list = [x_clinic_img_test]
-            # info_list = ['Demo + Clinic + Img:']
+            x_train_list = [x_clinic_img_train]
+            x_test_list = [x_clinic_img_test]
+            info_list = ['Demo + Clinic + Img:']
             
             #Main loop
             for i in range(len(info_list)):
@@ -134,12 +128,12 @@ def run(dataname, TASKS, FEATURES, log_func):
                         parameters,
                         n_jobs=5,
                         # StratifiedGroupKFold?
-                        cv=(StratifiedKFold(n_splits=5, shuffle=True, random_state=2) if task['stratify'] else KFold(n_splits=5, shuffle=True, random_state=1)),
+                        cv=(StratifiedKFold(n_splits=5, shuffle=True, random_state=1) if task['stratify'] else KFold(n_splits=5, shuffle=True, random_state=1)),
                         scoring=task['gridsearch_params']['scoring']
                     )
 
                     cv.fit(x_train, y_train.values.ravel())
-                    log_func('Best params: {}\n'.format(cv.best_params_))
+                    #log_func('Best params: {}\n'.format(cv.best_params_))
                     model_instance = model(**cv.best_params_)
                     model_instance.fit(x_train, y_train.values.ravel())
                     
@@ -160,11 +154,11 @@ def run(dataname, TASKS, FEATURES, log_func):
                         ci_train = bootstrap((y_train_np, train_pred[:, 1]), statistic=metrics.roc_auc_score, n_resamples=1000, paired=True, random_state=1)
                         ci_test = bootstrap((y_test_np, test_pred[:, 1]), statistic=metrics.roc_auc_score, n_resamples=1000, paired=True, random_state=1)
                         
-                        log_func('{} train {} ci {}\n'.format(metric[0],
-                                                            metric_func(y_train_np, train_pred),
-                                                            ci_train.confidence_interval
+                        log_func('{} train {}\n'.format(metric[0],
+                                                            metric_func(y_train_np, train_pred)
                                                             ))
-                        log_func('{} test {} ci {}\n'.format(metric[0],
-                                                            metric_func(y_test_np, test_pred),
-                                                            ci_test.confidence_interval
+                        log_func('{}\n'.format(ci_train.confidence_interval))
+                        log_func('{} test {}\n'.format(metric[0],
+                                                            metric_func(y_test_np, test_pred)
                                                             ))
+                        log_func('{}\n'.format(ci_test.confidence_interval))

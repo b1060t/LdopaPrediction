@@ -70,6 +70,13 @@
             {
                 "json_tag": "pat_roisurf"
             }
+        },
+        "malpem_vol":
+        {
+            "params":
+            {
+                "json_tag": "pat_malpem"
+            }
         }
     }
 }

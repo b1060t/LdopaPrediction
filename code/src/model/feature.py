@@ -52,7 +52,7 @@ def load_volume(data, train_idx, test_idx, params):
 def load_roivol(data, train_idx, test_idx, params):
     df_roivol = getPandas(params['json_tag'])
     # only use columns contains hammer
-    df_roivol = df_roivol[df_roivol.columns[df_roivol.columns.str.contains('hammer')]]
+    df_roivol = df_roivol[df_roivol.columns[df_roivol.columns.str.contains('thalamus_gm')]]
     #df_roivol = df_roivol.drop(['KEY'], axis=1)
     roivol_train = df_roivol.iloc[train_idx]
     roivol_test = df_roivol.iloc[test_idx]
@@ -60,7 +60,25 @@ def load_roivol(data, train_idx, test_idx, params):
 
 def load_surface(data, train_idx, test_idx, params):
     df_surface = getPandas(params['json_tag'])
-    df_surface = df_surface.drop(['KEY'], axis=1)
+    df_surface = df_surface[df_surface.columns[df_surface.columns.str.contains('HCP_MMP1')]]
+    #df_surface = df_surface.drop(['KEY'], axis=1)
     surface_train = df_surface.iloc[train_idx]
     surface_test = df_surface.iloc[test_idx]
     return surface_train, surface_test
+
+def load_malpemvol(data, train_idx, test_idx, params):
+    df_malpemvol = getPandas(params['json_tag'])
+    df_malpemvol = df_malpemvol.drop(['Background'], axis=1)
+    train_keys = data.iloc[train_idx]['KEY'].tolist()
+    test_keys = data.iloc[test_idx]['KEY'].tolist()
+    malpemvol_train = pd.DataFrame()
+    for key in train_keys:
+        malpemvol_train = malpemvol_train.append(df_malpemvol[df_malpemvol['KEY'] == key])
+    malpemvol_test = pd.DataFrame()
+    for key in test_keys:
+        malpemvol_test = malpemvol_test.append(df_malpemvol[df_malpemvol['KEY'] == key]) 
+    print(malpemvol_train['KEY'].tolist())
+    print(train_keys)
+    malpemvol_train = malpemvol_train.drop(['KEY'], axis=1)
+    malpemvol_test = malpemvol_test.drop(['KEY'], axis=1)
+    return malpemvol_train, malpemvol_test
