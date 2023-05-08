@@ -63,11 +63,11 @@ def run(dataname, TASKS, FEATURES, log_func, plot_flag=True):
             
             ##mRMR
             selected = mrmr_classif(X=x_img_train, y=y_train, K=50) if not isContinuous else mrmr_regression(X=x_img_train, y=y_train, K=50)
-            log_func('Selected features: {}\n'.format(selected))
+            log_func('mRMR Selected features: {}\n'.format(selected))
             ##LASSO
             la = LassoCV(cv=5, random_state=1, max_iter=10000)
             la.fit(x_img_train[selected], y_train)
-            log_func('Selected alpha: {}\n'.format(la.alpha_))
+            log_func('LASSO Selected alpha: {}\n'.format(la.alpha_))
             la.fit(x_img_train[selected], y_train)
             if plot_flag:
                 plt.semilogx(la.alphas_, la.mse_path_, ':')
@@ -95,7 +95,7 @@ def run(dataname, TASKS, FEATURES, log_func, plot_flag=True):
                 plt.show()
             else:
                 selected = np.array(selected)[np.abs(la.coef_)>0]
-            log_func('Selected features: {}\n'.format(selected))
+            log_func('LASSO Selected features: {}\n'.format(selected))
             if len(selected) > 2:
                 ##RFE
                 est = LogisticRegression(random_state=1) #l2
@@ -118,7 +118,7 @@ def run(dataname, TASKS, FEATURES, log_func, plot_flag=True):
                     plt.barh(selected[sort_idx], coef[sort_idx])
                     plt.xlabel('Importance')
                     plt.show()
-                log_func('Selected features: {}\n'.format(selected))
+                log_func('RFE Selected features: {}\n'.format(selected))
                 
             x_img_train = x_img_train[selected]
             x_img_test = x_img_test[selected]

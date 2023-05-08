@@ -6,6 +6,9 @@ import os
 import os.path
 import sys
 import glob
+import radiomics
+import logging
+from radiomics import featureextractor
 sys.path.append('..')
 from src.utils.data import getDict, writePandas, getPandas, getConfig, writeConfig
 
@@ -29,3 +32,9 @@ def genMalpemFeature(filename):
     malpem_data = pd.concat(rsts.tolist(), ignore_index=True)
     print(malpem_data.shape)
     writePandas('pat_malpem', malpem_data)
+
+def genMalpemTexture(filename):
+    data = getPandas(filename)
+    radiomics.logger.setLevel(logging.ERROR)
+    extract = featureextractor.RadiomicsFeatureExtractor()
+    extract.loadParams(os.path.join('config', 'radiomic.yaml'))

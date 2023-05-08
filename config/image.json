@@ -16,7 +16,7 @@
             {
                 "n_components": 0.8,
                 "pca_random_state": 1,
-                "img_path_tag": "T1_GM_PATH"
+                "img_path_tag": "CAT12_GM"
             }
         },
         "wm_pca":
@@ -25,7 +25,7 @@
             {
                 "n_components": 0.8,
                 "pca_random_state": 1,
-                "img_path_tag": "T1_WM_PATH"
+                "img_path_tag": "CAT12_WM"
             }
         },
         "vol_pca":
@@ -44,6 +44,15 @@
                 "n_components": 0.8,
                 "pca_random_state": 1,
                 "json_tag": "pat_roivol"
+            }
+        },
+        "surf_cat12_pca":
+        {
+            "params":
+            {
+                "n_components": 0.8,
+                "pca_random_state": 1,
+                "json_tag": "pat_roisurf"
             }
         },
         "t1_radiomic_full":

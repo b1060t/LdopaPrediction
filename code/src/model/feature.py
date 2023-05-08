@@ -48,7 +48,14 @@ def gen_pca_cat12_vol(data, train_idx, test_idx, params):
     vol_test = np.reshape(vol_test, (vol_test.shape[0], -1))
     pca_train, pca = PCA_fit_transform(vol_train, params)
     pca_test = PCA_transform(vol_test, pca)
-    return pca_train, pca_test   
+    return pca_train, pca_test
+
+def gen_pca_cat12_surf(data, train_idx, test_idx, params):
+    surf_train, surf_test = load_surface(data, train_idx, test_idx, params)
+    surf_test = np.reshape(surf_test, (surf_test.shape[0], -1))
+    pca_train, pca = PCA_fit_transform(surf_train, params)
+    pca_test = PCA_transform(surf_test, pca)
+    return pca_train, pca_test
 
 def load_radiomics(data, train_idx, test_idx, params):
     df_radiomic = getPandas(params['json_tag'])
