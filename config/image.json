@@ -1,64 +1,12 @@
 {
     "task":
     {
-        "t1_pca":
-        {
-            "params":
-            {
-                "n_components": 0.8,
-                "pca_random_state": 1,
-                "img_path_tag": "ANTs_Reg"
-            }
-        },
-        "gm_pca":
-        {
-            "params":
-            {
-                "n_components": 0.8,
-                "pca_random_state": 1,
-                "img_path_tag": "CAT12_SGM"
-            }
-        },
-        "wm_pca":
-        {
-            "params":
-            {
-                "n_components": 0.8,
-                "pca_random_state": 1,
-                "img_path_tag": "CAT12_WM"
-            }
-        },
-        "vol_malpem_pca":
-        {
-            "params":
-            {
-                "n_components": 0.8,
-                "pca_random_state": 1,
-                "json_tag": "pat_malpem"
-            }
-        },
-        "texture_pca":
-        {
-            "params":
-            {
-                "n_components": 0.8,
-                "pca_random_state": 1,
-                "json_tag": "data_radiomic_full_CAT_0.8"
-            }
-        },
-        "sgm_ica":
-        {
-            "params":
-            {
-                "json_tag": "pat_sgm_ica"
-            }
-        },
         "ica_voxel_online":
         {
             "params":
             {
                 "n_components": 35,
-                "tag": "CAT12_T1"
+                "tag": "CAT12_WM"
             }
         },
         "ica_feature_online":
@@ -66,14 +14,32 @@
             "params":
             {
                 "n_components": 35,
-                "json_tag": "pat_malpem"
+                "json_tag": "pat_ANTs_Reg_radiomic_CAT_0.8",
+                "use_key": false
+            }
+        },
+        "pca_voxel_online":
+        {
+            "params":
+            {
+                "n_components": 35,
+                "tag": "CAT12_WM"
+            }
+        },
+        "pca_feature_online":
+        {
+            "params":
+            {
+                "n_components": 20,
+                "json_tag": "pat_roivol",
+                "use_key": true
             }
         },
         "t1_radiomic_full":
         {
             "params":
             {
-                "json_tag": "pat_ANTs_Reg_radiomic"
+                "json_tag": "data_radiomic_full"
             }
         },
         "t1_radiomic":

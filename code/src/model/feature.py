@@ -25,24 +25,6 @@ def PCA_transform(vox, pca):
     features = pd.DataFrame(features, columns=['PCA_{}'.format(i+1) for i in range(features.shape[1])])
     return features
 
-def gen_pca(data, train_idx, test_idx, params):
-    vox = load_imgs(data, params['img_path_tag'])
-    vox = np.array([np.array(l) for l in vox])
-    vox = np.reshape(vox, (vox.shape[0], -1))
-    # Drop 0 along axis0
-    #vox = vox[:, ~np.all(vox==0, axis=0)]
-    #vox = zscore(vox, axis=1)
-    pca_train, pca = PCA_fit_transform(vox[train_idx], params)
-    pca_test = PCA_transform(vox[test_idx], pca)
-    return pca_train, pca_test
-
-def gen_pca_malpem_vol(data, train_idx, test_idx, params):
-    vol_train, vol_test = load_malpemvol(data, train_idx, test_idx, params)
-    vol_test = np.reshape(vol_test, (vol_test.shape[0], -1))
-    pca_train, pca = PCA_fit_transform(vol_train, params)
-    pca_test = PCA_transform(vol_test, pca)
-    return pca_train, pca_test
-
 def load_radiomics(data, train_idx, test_idx, params):
     df_radiomic = getPandas(params['json_tag'])
     df_radiomic = df_radiomic.drop(['KEY'], axis=1)
@@ -88,56 +70,134 @@ def load_malpemvol(data, train_idx, test_idx, params):
     malpemvol_test = malpemvol_test.drop(['KEY'], axis=1)
     return malpemvol_train, malpemvol_test
 
-def load_sgm_ica(data, train_idx, test_idx, params):
-    df_sgm_ica = getPandas(params['json_tag'])
-    df_sgm_ica = df_sgm_ica.drop(['KEY'], axis=1)
-    sgm_ica_train = df_sgm_ica.iloc[train_idx]
-    sgm_ica_test = df_sgm_ica.iloc[test_idx]
-    return sgm_ica_train, sgm_ica_test
+def load_vox_ica(data, train_idx, test_idx, params):
+    df_vox_ica = getPandas(params['json_tag'])
+    df_vox_ica = df_vox_ica.drop(['KEY'], axis=1)
+    vox_ica_train = df_vox_ica.iloc[train_idx]
+    vox_ica_test = df_vox_ica.iloc[test_idx]
+    return vox_ica_train, vox_ica_test
 
 def gen_voxel_ica_online(data, train_idx, test_idx, params):
-    sgm_path = data.iloc[train_idx][params['tag']].tolist()
-    train_sgm_arr = np.array([nib.load(path).get_fdata() for path in sgm_path])
-    train_sgm_arr = train_sgm_arr.reshape(train_sgm_arr.shape[0], -1)
+    vox_path = data.iloc[train_idx][params['tag']].tolist()
+    train_vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
+    train_vox_arr = train_vox_arr.reshape(train_vox_arr.shape[0], -1)
     # drop 0, save mask
-    mask = np.all(train_sgm_arr==0, axis=0)
-    train_sgm_arr = train_sgm_arr[:, ~mask]
-    train_sgm_arr = zscore(train_sgm_arr, axis=1)
+    mask = np.all(train_vox_arr==0, axis=0)
+    train_vox_arr = train_vox_arr[:, ~mask]
+    train_vox_arr = zscore(train_vox_arr, axis=1)
     ica_transformer = FastICA(n_components=params['n_components'], random_state=0)
-    ica_transformer.fit_transform(train_sgm_arr)
-    ica_transformer.fit(train_sgm_arr)
+    ica_transformer.fit_transform(train_vox_arr)
+    ica_transformer.fit(train_vox_arr)
     # transform both train and test data
-    sgm_path = data[params['tag']].tolist()
-    sgm_arr = np.array([nib.load(path).get_fdata() for path in sgm_path])
-    sgm_arr = sgm_arr.reshape(sgm_arr.shape[0], -1)
-    sgm_arr = sgm_arr[:, ~mask]
-    sgm_arr = zscore(sgm_arr, axis=1)
-    sgm_ica = ica_transformer.transform(sgm_arr)
-    sgm_ica_train = pd.DataFrame(sgm_ica[train_idx], columns=['ICA_{}'.format(i+1) for i in range(sgm_ica.shape[1])])
-    sgm_ica_test = pd.DataFrame(sgm_ica[test_idx], columns=['ICA_{}'.format(i+1) for i in range(sgm_ica.shape[1])])
-    return sgm_ica_train, sgm_ica_test
+    vox_path = data[params['tag']].tolist()
+    vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
+    vox_arr = vox_arr.reshape(vox_arr.shape[0], -1)
+    vox_arr = vox_arr[:, ~mask]
+    vox_arr = zscore(vox_arr, axis=1)
+    vox_ica = ica_transformer.transform(vox_arr)
+    vox_ica_train = pd.DataFrame(vox_ica[train_idx], columns=['ICA_{}'.format(i+1) for i in range(vox_ica.shape[1])])
+    vox_ica_test = pd.DataFrame(vox_ica[test_idx], columns=['ICA_{}'.format(i+1) for i in range(vox_ica.shape[1])])
+    return vox_ica_train, vox_ica_test
 
 def gen_feature_ica_online(data, train_idx, test_idx, params):
     features = getPandas(params['json_tag'])
-    train_feature_arr = np.array(features.iloc[train_idx].drop(['KEY'], axis=1).values.tolist())
+    if params['use_key']:
+        train_keys = data.iloc[train_idx]['KEY'].tolist()
+        test_keys = data.iloc[test_idx]['KEY'].tolist()
+        train_feature = pd.DataFrame()
+        for key in train_keys:
+            train_feature = train_feature.append(features[features['KEY'] == key])
+        test_feature = pd.DataFrame()
+        for key in test_keys:
+            test_feature = test_feature.append(features[features['KEY'] == key])
+    else:
+        train_feature = features.iloc[train_idx]
+        test_feature = features.iloc[test_idx]
+    train_feature = train_feature.drop(['KEY'], axis=1)
+    test_feature = test_feature.drop(['KEY'], axis=1)
+    train_feature_arr = np.array(train_feature.values.tolist())
     train_feature_arr = zscore(train_feature_arr, axis=1)
     ica_transformer = FastICA(n_components=params['n_components'], random_state=0)
     ica_transformer.fit(train_feature_arr)
-    feature_arr = np.array(features.drop(['KEY'], axis=1).values.tolist())
-    feature_arr = zscore(feature_arr, axis=1)
-    feature_ica = ica_transformer.transform(feature_arr)
-    feature_ica_train = pd.DataFrame(feature_ica[train_idx], columns=['ICA_{}'.format(i+1) for i in range(feature_ica.shape[1])])
-    feature_ica_test = pd.DataFrame(feature_ica[test_idx], columns=['ICA_{}'.format(i+1) for i in range(feature_ica.shape[1])])
-    return feature_ica_train, feature_ica_test
+    if params['use_key']:
+        test_feature_arr = np.array(test_feature.values.tolist())
+        test_feature_arr = zscore(test_feature_arr, axis=1)
+        feature_ica_train = ica_transformer.transform(train_feature_arr)
+        feature_ica_test = ica_transformer.transform(test_feature_arr)
+        feature_ica_train = pd.DataFrame(feature_ica_train, columns=['ICA_{}'.format(i+1) for i in range(feature_ica_test.shape[1])])
+        feature_ica_test = pd.DataFrame(feature_ica_test, columns=['ICA_{}'.format(i+1) for i in range(feature_ica_test.shape[1])])
+        return feature_ica_train, feature_ica_test
+    else:
+        feature_arr = np.array(features.drop(['KEY'], axis=1).values.tolist())
+        feature_arr = zscore(feature_arr, axis=1)
+        feature_ica = ica_transformer.transform(feature_arr)
+        feature_ica_train = pd.DataFrame(feature_ica[train_idx], columns=['ICA_{}'.format(i+1) for i in range(feature_ica.shape[1])])
+        feature_ica_test = pd.DataFrame(feature_ica[test_idx], columns=['ICA_{}'.format(i+1) for i in range(feature_ica.shape[1])])
+        return feature_ica_train, feature_ica_test
+
+def gen_voxel_pca_online(data, train_idx, test_idx, params):
+    vox_path = data.iloc[train_idx][params['tag']].tolist()
+    train_vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
+    train_vox_arr = train_vox_arr.reshape(train_vox_arr.shape[0], -1)
+    # drop 0, save mask
+    mask = np.all(train_vox_arr==0, axis=0)
+    train_vox_arr = train_vox_arr[:, ~mask]
+    train_vox_arr = zscore(train_vox_arr, axis=1)
+    pca_transformer = PCA(n_components=params['n_components'], random_state=0)
+    pca_transformer.fit_transform(train_vox_arr)
+    pca_transformer.fit(train_vox_arr)
+    # transform both train and test data
+    vox_path = data[params['tag']].tolist()
+    vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
+    vox_arr = vox_arr.reshape(vox_arr.shape[0], -1)
+    vox_arr = vox_arr[:, ~mask]
+    vox_arr = zscore(vox_arr, axis=1)
+    vox_pca = pca_transformer.transform(vox_arr)
+    vox_pca_train = pd.DataFrame(vox_pca[train_idx], columns=['PCA_{}'.format(i+1) for i in range(vox_pca.shape[1])])
+    vox_pca_test = pd.DataFrame(vox_pca[test_idx], columns=['PCA_{}'.format(i+1) for i in range(vox_pca.shape[1])])
+    return vox_pca_train, vox_pca_test
+
+def gen_feature_pca_online(data, train_idx, test_idx, params):
+    features = getPandas(params['json_tag'])
+    if params['use_key']:
+        train_keys = data.iloc[train_idx]['KEY'].tolist()
+        test_keys = data.iloc[test_idx]['KEY'].tolist()
+        train_feature = pd.DataFrame()
+        for key in train_keys:
+            train_feature = train_feature.append(features[features['KEY'] == key])
+        test_feature = pd.DataFrame()
+        for key in test_keys:
+            test_feature = test_feature.append(features[features['KEY'] == key])
+    else:
+        train_feature = features.iloc[train_idx]
+        test_feature = features.iloc[test_idx]
+    train_feature = train_feature.drop(['KEY'], axis=1)
+    test_feature = test_feature.drop(['KEY'], axis=1)
+    train_feature_arr = np.array(train_feature.values.tolist())
+    train_feature_arr = zscore(train_feature_arr, axis=1)
+    pca_transformer = PCA(n_components=params['n_components'], random_state=0)
+    pca_transformer.fit(train_feature_arr)
+    if params['use_key']:
+        test_feature_arr = np.array(test_feature.values.tolist())
+        test_feature_arr = zscore(test_feature_arr, axis=1)
+        feature_pca_train = pca_transformer.transform(train_feature_arr)
+        feature_pca_test = pca_transformer.transform(test_feature_arr)
+        feature_pca_train = pd.DataFrame(feature_pca_train, columns=['PCA_{}'.format(i+1) for i in range(feature_pca_test.shape[1])])
+        feature_pca_test = pd.DataFrame(feature_pca_test, columns=['PCA_{}'.format(i+1) for i in range(feature_pca_test.shape[1])])
+        return feature_pca_train, feature_pca_test
+    else:
+        feature_arr = np.array(features.drop(['KEY'], axis=1).values.tolist())
+        feature_arr = zscore(feature_arr, axis=1)
+        feature_pca = pca_transformer.transform(feature_arr)
+        feature_pca_train = pd.DataFrame(feature_pca[train_idx], columns=['PCA_{}'.format(i+1) for i in range(feature_pca.shape[1])])
+        feature_pca_test = pd.DataFrame(feature_pca[test_idx], columns=['PCA_{}'.format(i+1) for i in range(feature_pca.shape[1])])
+        return feature_pca_train, feature_pca_test
 
 Feature_LUT = {
-    't1_pca': gen_pca,
-    'gm_pca': gen_pca,
-    'wm_pca': gen_pca,
-    'vol_malpem_pca': gen_pca_malpem_vol,
-    'sgm_ica': load_sgm_ica,
     'ica_voxel_online': gen_voxel_ica_online,
     'ica_feature_online': gen_feature_ica_online,
+    'pca_voxel_online': gen_voxel_pca_online,
+    'pca_feature_online': gen_feature_pca_online,
     't1_radiomic': load_radiomics,
     't1_radiomic_full': load_radiomics,
     'gm_radiomic': load_radiomics,
