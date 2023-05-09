@@ -4,4 +4,6 @@ PD25*
 .ipynb_checkpoints
 ref.py
 test*
+code/matlab/*.json
+code/matlab/spm
 **/__pycache__

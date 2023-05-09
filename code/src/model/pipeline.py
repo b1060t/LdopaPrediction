@@ -12,10 +12,11 @@ from scipy.stats import bootstrap
 from mrmr import mrmr_classif, mrmr_regression
 sys.path.append('..')
 from src.utils.data import getPandas, getConfig, getDict
-from src.model.lut import Model_LUT, Metrics_LUT, Feature_LUT, Plot_LUT
+from src.model.lut import Model_LUT, Metrics_LUT, Plot_LUT
+from src.model.feature import Feature_LUT
 from src.model.stats import stats_analyze
 
-def run(dataname, TASKS, FEATURES, log_func, plot_flag=True):
+def run(dataname, TASKS, FEATURES, log_func, plot_flag=True, feature_selection=True):
     data = getPandas(dataname)
     prefix = dataname.split('_')[0]
     task_config = getConfig('task')
@@ -58,70 +59,69 @@ def run(dataname, TASKS, FEATURES, log_func, plot_flag=True):
             x_img_train = pd.DataFrame(scaler.fit_transform(x_img_train, y_train), columns=x_img_train.columns)
             x_img_test = pd.DataFrame(scaler.transform(x_img_test), columns=x_img_test.columns)
             
-            
             isContinuous = task['continuous']
-            
-            ##mRMR
-            selected = mrmr_classif(X=x_img_train, y=y_train, K=50) if not isContinuous else mrmr_regression(X=x_img_train, y=y_train, K=50)
-            log_func('mRMR Selected features: {}\n'.format(selected))
-            ##LASSO
-            la = LassoCV(cv=5, random_state=1, max_iter=10000)
-            la.fit(x_img_train[selected], y_train)
-            log_func('LASSO Selected alpha: {}\n'.format(la.alpha_))
-            la.fit(x_img_train[selected], y_train)
-            if plot_flag:
-                plt.semilogx(la.alphas_, la.mse_path_, ':')
-                plt.plot(
-                    la.alphas_ ,
-                    la.mse_path_.mean(axis=-1),
-                    "k",
-                    label="Average across the folds",
-                    linewidth=2,
-                )
-                plt.axvline(
-                    la.alpha_, linestyle="--", color="k", label="alpha: CV estimate"
-                )
-                plt.legend()
-                plt.ylabel('MSE')
-                plt.xlabel('alpha')
-                plt.show()
-                la = Lasso(alpha=la.alpha_)
+            if feature_selection:
+                ##mRMR
+                selected = mrmr_classif(X=x_img_train, y=y_train, K=50) if not isContinuous else mrmr_regression(X=x_img_train, y=y_train, K=50)
+                log_func('mRMR Selected features: {}\n'.format(selected))
+                ##LASSO
+                la = LassoCV(cv=5, random_state=1, max_iter=10000)
                 la.fit(x_img_train[selected], y_train)
-                selected = np.array(selected)[np.abs(la.coef_)>0]
-                coef = np.array(la.coef_)[np.abs(la.coef_)>0]
-                sort_idx = coef.argsort()
-                plt.barh(selected[sort_idx], coef[sort_idx])
-                plt.xlabel('Importance')
-                plt.show()
-            else:
-                selected = np.array(selected)[np.abs(la.coef_)>0]
-            log_func('LASSO Selected features: {}\n'.format(selected))
-            if len(selected) > 2:
-                ##RFE
-                est = LogisticRegression(random_state=1) #l2
-                selector = RFECV(est, min_features_to_select=1, cv=5, step=1)
-                selector = selector.fit(X=x_img_train[selected], y=y_train)
-                selected = np.array(selected)[selector.get_support()]
+                log_func('LASSO Selected alpha: {}\n'.format(la.alpha_))
+                la.fit(x_img_train[selected], y_train)
                 if plot_flag:
-                    n_scores = len(selector.cv_results_["mean_test_score"])
-                    plt.errorbar(
-                        range(1, n_scores+1),
-                        selector.cv_results_["mean_test_score"],
-                        yerr=selector.cv_results_["std_test_score"],
+                    plt.semilogx(la.alphas_, la.mse_path_, ':')
+                    plt.plot(
+                        la.alphas_ ,
+                        la.mse_path_.mean(axis=-1),
+                        "k",
+                        label="Average across the folds",
+                        linewidth=2,
                     )
-                    plt.xticks(range(1,n_scores+1))
-                    plt.xlabel("Number of features selected")
-                    plt.ylabel("Mean test accuracy")
+                    plt.axvline(
+                        la.alpha_, linestyle="--", color="k", label="alpha: CV estimate"
+                    )
+                    plt.legend()
+                    plt.ylabel('MSE')
+                    plt.xlabel('alpha')
                     plt.show()
-                    coef = selector.estimator_.coef_[0]
+                    la = Lasso(alpha=la.alpha_)
+                    la.fit(x_img_train[selected], y_train)
+                    selected = np.array(selected)[np.abs(la.coef_)>0]
+                    coef = np.array(la.coef_)[np.abs(la.coef_)>0]
                     sort_idx = coef.argsort()
                     plt.barh(selected[sort_idx], coef[sort_idx])
                     plt.xlabel('Importance')
                     plt.show()
-                log_func('RFE Selected features: {}\n'.format(selected))
+                else:
+                    selected = np.array(selected)[np.abs(la.coef_)>0]
+                log_func('LASSO Selected features: {}\n'.format(selected))
+                if len(selected) > 2:
+                    ##RFE
+                    est = LogisticRegression(random_state=1) #l2
+                    selector = RFECV(est, min_features_to_select=1, cv=5, step=1)
+                    selector = selector.fit(X=x_img_train[selected], y=y_train)
+                    selected = np.array(selected)[selector.get_support()]
+                    if plot_flag:
+                        n_scores = len(selector.cv_results_["mean_test_score"])
+                        plt.errorbar(
+                            range(1, n_scores+1),
+                            selector.cv_results_["mean_test_score"],
+                            yerr=selector.cv_results_["std_test_score"],
+                        )
+                        plt.xticks(range(1,n_scores+1))
+                        plt.xlabel("Number of features selected")
+                        plt.ylabel("Mean test accuracy")
+                        plt.show()
+                        coef = selector.estimator_.coef_[0]
+                        sort_idx = coef.argsort()
+                        plt.barh(selected[sort_idx], coef[sort_idx])
+                        plt.xlabel('Importance')
+                        plt.show()
+                    log_func('RFE Selected features: {}\n'.format(selected))
                 
-            x_img_train = x_img_train[selected]
-            x_img_test = x_img_test[selected]
+                x_img_train = x_img_train[selected]
+                x_img_test = x_img_test[selected]
             
             # Rearrange data
             # demo + clinic, demo + img, demo + clinic + img

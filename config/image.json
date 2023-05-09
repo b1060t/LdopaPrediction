@@ -7,7 +7,7 @@
             {
                 "n_components": 0.8,
                 "pca_random_state": 1,
-                "img_path_tag": "T1_MNI_PATH"
+                "img_path_tag": "ANTs_Reg"
             }
         },
         "gm_pca":
@@ -16,7 +16,7 @@
             {
                 "n_components": 0.8,
                 "pca_random_state": 1,
-                "img_path_tag": "CAT12_GM"
+                "img_path_tag": "CAT12_SGM"
             }
         },
         "wm_pca":
@@ -28,7 +28,7 @@
                 "img_path_tag": "CAT12_WM"
             }
         },
-        "vol_pca":
+        "vol_malpem_pca":
         {
             "params":
             {
@@ -37,22 +37,36 @@
                 "json_tag": "pat_malpem"
             }
         },
-        "vol_cat12_pca":
+        "texture_pca":
         {
             "params":
             {
                 "n_components": 0.8,
                 "pca_random_state": 1,
-                "json_tag": "pat_roivol"
+                "json_tag": "data_radiomic_full_CAT_0.8"
             }
         },
-        "surf_cat12_pca":
+        "sgm_ica":
         {
             "params":
             {
-                "n_components": 0.8,
-                "pca_random_state": 1,
-                "json_tag": "pat_roisurf"
+                "json_tag": "pat_sgm_ica"
+            }
+        },
+        "ica_voxel_online":
+        {
+            "params":
+            {
+                "n_components": 35,
+                "tag": "CAT12_T1"
+            }
+        },
+        "ica_feature_online":
+        {
+            "params":
+            {
+                "n_components": 35,
+                "json_tag": "pat_malpem"
             }
         },
         "t1_radiomic_full":

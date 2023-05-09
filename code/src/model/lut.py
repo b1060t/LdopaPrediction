@@ -7,8 +7,6 @@ from xgboost.sklearn import XGBClassifier
 
 import sys
 sys.path.append('..')
-from src.model.feature import gen_pca, load_radiomics, load_volume, load_roivol, load_surface, load_malpemvol, gen_pca_malpem_vol, gen_pca_cat12_vol, \
-    gen_pca_cat12_surf
 
 import scikitplot as skplt
 import matplotlib.pyplot as plt
@@ -54,20 +52,4 @@ Plot_LUT = {
     'plot_roc': skplt.metrics.plot_roc,
     'plot_confusion_matrix': plot_confusion_matrix,
     'plot_r2': plot_r2
-}
-
-Feature_LUT = {
-    't1_pca': gen_pca,
-    'gm_pca': gen_pca,
-    'wm_pca': gen_pca,
-    'vol_pca': gen_pca_malpem_vol,
-    'vol_cat12_pca': gen_pca_cat12_vol,
-    'surf_cat12_pca': gen_pca_cat12_surf,
-    't1_radiomic': load_radiomics,
-    't1_radiomic_full': load_radiomics,
-    'gm_radiomic': load_radiomics,
-    'tiv_gmv': load_volume,
-    'roi_volume': load_roivol,
-    'surf_info': load_surface,
-    'malpem_vol': load_malpemvol
 }

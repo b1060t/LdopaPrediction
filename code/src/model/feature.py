@@ -2,7 +2,7 @@ import nibabel as nib
 import numpy as np
 import pandas as pd
 from scipy.stats import zscore
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, FastICA
 import sys
 sys.path.append('..')
 from src.utils.data import getPandas
@@ -42,20 +42,6 @@ def gen_pca_malpem_vol(data, train_idx, test_idx, params):
     pca_train, pca = PCA_fit_transform(vol_train, params)
     pca_test = PCA_transform(vol_test, pca)
     return pca_train, pca_test
- 
-def gen_pca_cat12_vol(data, train_idx, test_idx, params):
-    vol_train, vol_test = load_roivol(data, train_idx, test_idx, params)
-    vol_test = np.reshape(vol_test, (vol_test.shape[0], -1))
-    pca_train, pca = PCA_fit_transform(vol_train, params)
-    pca_test = PCA_transform(vol_test, pca)
-    return pca_train, pca_test
-
-def gen_pca_cat12_surf(data, train_idx, test_idx, params):
-    surf_train, surf_test = load_surface(data, train_idx, test_idx, params)
-    surf_test = np.reshape(surf_test, (surf_test.shape[0], -1))
-    pca_train, pca = PCA_fit_transform(surf_train, params)
-    pca_test = PCA_transform(surf_test, pca)
-    return pca_train, pca_test
 
 def load_radiomics(data, train_idx, test_idx, params):
     df_radiomic = getPandas(params['json_tag'])
@@ -81,8 +67,8 @@ def load_roivol(data, train_idx, test_idx, params):
 
 def load_surface(data, train_idx, test_idx, params):
     df_surface = getPandas(params['json_tag'])
-    df_surface = df_surface[df_surface.columns[df_surface.columns.str.contains('HCP_MMP1')]]
-    #df_surface = df_surface.drop(['KEY'], axis=1)
+    #df_surface = df_surface[df_surface.columns[df_surface.columns.str.contains('HCP_MMP1')]]
+    df_surface = df_surface.drop(['KEY'], axis=1)
     surface_train = df_surface.iloc[train_idx]
     surface_test = df_surface.iloc[test_idx]
     return surface_train, surface_test
@@ -101,3 +87,62 @@ def load_malpemvol(data, train_idx, test_idx, params):
     malpemvol_train = malpemvol_train.drop(['KEY'], axis=1)
     malpemvol_test = malpemvol_test.drop(['KEY'], axis=1)
     return malpemvol_train, malpemvol_test
+
+def load_sgm_ica(data, train_idx, test_idx, params):
+    df_sgm_ica = getPandas(params['json_tag'])
+    df_sgm_ica = df_sgm_ica.drop(['KEY'], axis=1)
+    sgm_ica_train = df_sgm_ica.iloc[train_idx]
+    sgm_ica_test = df_sgm_ica.iloc[test_idx]
+    return sgm_ica_train, sgm_ica_test
+
+def gen_voxel_ica_online(data, train_idx, test_idx, params):
+    sgm_path = data.iloc[train_idx][params['tag']].tolist()
+    train_sgm_arr = np.array([nib.load(path).get_fdata() for path in sgm_path])
+    train_sgm_arr = train_sgm_arr.reshape(train_sgm_arr.shape[0], -1)
+    # drop 0, save mask
+    mask = np.all(train_sgm_arr==0, axis=0)
+    train_sgm_arr = train_sgm_arr[:, ~mask]
+    train_sgm_arr = zscore(train_sgm_arr, axis=1)
+    ica_transformer = FastICA(n_components=params['n_components'], random_state=0)
+    ica_transformer.fit_transform(train_sgm_arr)
+    ica_transformer.fit(train_sgm_arr)
+    # transform both train and test data
+    sgm_path = data[params['tag']].tolist()
+    sgm_arr = np.array([nib.load(path).get_fdata() for path in sgm_path])
+    sgm_arr = sgm_arr.reshape(sgm_arr.shape[0], -1)
+    sgm_arr = sgm_arr[:, ~mask]
+    sgm_arr = zscore(sgm_arr, axis=1)
+    sgm_ica = ica_transformer.transform(sgm_arr)
+    sgm_ica_train = pd.DataFrame(sgm_ica[train_idx], columns=['ICA_{}'.format(i+1) for i in range(sgm_ica.shape[1])])
+    sgm_ica_test = pd.DataFrame(sgm_ica[test_idx], columns=['ICA_{}'.format(i+1) for i in range(sgm_ica.shape[1])])
+    return sgm_ica_train, sgm_ica_test
+
+def gen_feature_ica_online(data, train_idx, test_idx, params):
+    features = getPandas(params['json_tag'])
+    train_feature_arr = np.array(features.iloc[train_idx].drop(['KEY'], axis=1).values.tolist())
+    train_feature_arr = zscore(train_feature_arr, axis=1)
+    ica_transformer = FastICA(n_components=params['n_components'], random_state=0)
+    ica_transformer.fit(train_feature_arr)
+    feature_arr = np.array(features.drop(['KEY'], axis=1).values.tolist())
+    feature_arr = zscore(feature_arr, axis=1)
+    feature_ica = ica_transformer.transform(feature_arr)
+    feature_ica_train = pd.DataFrame(feature_ica[train_idx], columns=['ICA_{}'.format(i+1) for i in range(feature_ica.shape[1])])
+    feature_ica_test = pd.DataFrame(feature_ica[test_idx], columns=['ICA_{}'.format(i+1) for i in range(feature_ica.shape[1])])
+    return feature_ica_train, feature_ica_test
+
+Feature_LUT = {
+    't1_pca': gen_pca,
+    'gm_pca': gen_pca,
+    'wm_pca': gen_pca,
+    'vol_malpem_pca': gen_pca_malpem_vol,
+    'sgm_ica': load_sgm_ica,
+    'ica_voxel_online': gen_voxel_ica_online,
+    'ica_feature_online': gen_feature_ica_online,
+    't1_radiomic': load_radiomics,
+    't1_radiomic_full': load_radiomics,
+    'gm_radiomic': load_radiomics,
+    'tiv_gmv': load_volume,
+    'roi_volume': load_roivol,
+    'surf_info': load_surface,
+    'malpem_vol': load_malpemvol
+}
