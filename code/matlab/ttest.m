@@ -26,7 +26,7 @@ gmlist = cell2mat(reshape(gmlist,length(gmlist),1));
 wmlist = {good.WM_VOL, bad.WM_VOL};
 wmlist = cell2mat(reshape(wmlist,length(wmlist),1));
 
-matPath = "./spm";
+matPath = "./uncorrected";
 
 estimate_job.matlabbatch{1}.spm.stats.factorial_design.dir = cellstr(matPath);
 estimate_job.matlabbatch{1}.spm.stats.factorial_design.des.t2.scans1 = good_img;
@@ -65,7 +65,7 @@ estimate_job.matlabbatch{1}.spm.stats.factorial_design.globalm.glonorm = 1;
 
 spm_jobman('run',estimate_job.matlabbatch);
 
-spmPath = "spm/SPM.mat";
+spmPath = "uncorrected/SPM.mat";
 spm('defaults','fmri');
 spm_jobman('initcfg');
 run_job = struct;

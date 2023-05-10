@@ -16,7 +16,7 @@ from src.model.lut import Model_LUT, Metrics_LUT, Plot_LUT
 from src.model.feature import Feature_LUT
 from src.model.stats import stats_analyze
 
-def run(dataname, TASKS, FEATURES, log_func, plot_flag=True, feature_selection=True):
+def run(dataname, TASKS, FEATURES, log_func=print, plot_flag=True, feature_selection=True):
     data = getPandas(dataname)
     prefix = dataname.split('_')[0]
     task_config = getConfig('task')
@@ -31,6 +31,7 @@ def run(dataname, TASKS, FEATURES, log_func, plot_flag=True, feature_selection=T
             log_func('Feature: {}\n'.format(feature_names))
             
             task = task_config['task'][task_name]
+            random_state = task['random_state']
             models = task['models']
             metric_list = task['metrics']
             
@@ -65,7 +66,7 @@ def run(dataname, TASKS, FEATURES, log_func, plot_flag=True, feature_selection=T
                 selected = mrmr_classif(X=x_img_train, y=y_train, K=50) if not isContinuous else mrmr_regression(X=x_img_train, y=y_train, K=50)
                 log_func('mRMR Selected features: {}\n'.format(selected))
                 ##LASSO
-                la = LassoCV(cv=5, random_state=1, max_iter=10000)
+                la = LassoCV(cv=5, random_state=random_state, max_iter=10000)
                 la.fit(x_img_train[selected], y_train)
                 log_func('LASSO Selected alpha: {}\n'.format(la.alpha_))
                 la.fit(x_img_train[selected], y_train)
@@ -98,7 +99,7 @@ def run(dataname, TASKS, FEATURES, log_func, plot_flag=True, feature_selection=T
                 log_func('LASSO Selected features: {}\n'.format(selected))
                 if len(selected) > 2:
                     ##RFE
-                    est = LogisticRegression(random_state=1) #l2
+                    est = LogisticRegression(random_state=random_state) #l2
                     selector = RFECV(est, min_features_to_select=1, cv=5, step=1)
                     selector = selector.fit(X=x_img_train[selected], y=y_train)
                     selected = np.array(selected)[selector.get_support()]
@@ -162,6 +163,7 @@ def run(dataname, TASKS, FEATURES, log_func, plot_flag=True, feature_selection=T
                 for model in models:
                     name = model['name']
                     parameters = model['params']
+                    parameters['random_state'] = [random_state]
                     model = Model_LUT[name]
                     
                     cv = GridSearchCV(
@@ -169,7 +171,7 @@ def run(dataname, TASKS, FEATURES, log_func, plot_flag=True, feature_selection=T
                         parameters,
                         n_jobs=5,
                         # StratifiedGroupKFold?
-                        cv=(StratifiedKFold(n_splits=5, shuffle=True, random_state=1) if task['stratify'] else KFold(n_splits=5, shuffle=True, random_state=1)),
+                        cv=(StratifiedKFold(n_splits=5, shuffle=True, random_state=random_state) if task['stratify'] else KFold(n_splits=5, shuffle=True, random_state=random_state)),
                         scoring=task['gridsearch_params']['scoring']
                     )
 
@@ -192,8 +194,8 @@ def run(dataname, TASKS, FEATURES, log_func, plot_flag=True, feature_selection=T
                         from sklearn import metrics
                         y_train_np = y_train[task['output']].to_numpy()
                         y_test_np = y_test[task['output']].to_numpy()
-                        ci_train = bootstrap((y_train_np, train_pred[:, 1]), statistic=metrics.roc_auc_score, n_resamples=1000, paired=True, random_state=1)
-                        ci_test = bootstrap((y_test_np, test_pred[:, 1]), statistic=metrics.roc_auc_score, n_resamples=1000, paired=True, random_state=1)
+                        ci_train = bootstrap((y_train_np, train_pred[:, 1]), statistic=metrics.roc_auc_score, n_resamples=1000, paired=True, random_state=random_state)
+                        ci_test = bootstrap((y_test_np, test_pred[:, 1]), statistic=metrics.roc_auc_score, n_resamples=1000, paired=True, random_state=random_state)
                         
                         log_func('{} train {}\n'.format(metric[0],
                                                             metric_func(y_train_np, train_pred)

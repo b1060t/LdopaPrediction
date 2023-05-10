@@ -4,19 +4,12 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
 from xgboost.sklearn import XGBClassifier
-
-import sys
-sys.path.append('..')
-
 import scikitplot as skplt
-import matplotlib.pyplot as plt
-
 from sklearn import metrics
-
 import numpy as np
 import seaborn as sns
-
-import functools
+import sys
+sys.path.append('..')
 
 def class2_roc_auc_score(y_true, y_score):
     y_pred = y_score[:, 1]

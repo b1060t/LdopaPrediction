@@ -1,4 +1,5 @@
 import nibabel as nib
+from nilearn import image
 import numpy as np
 import pandas as pd
 from scipy.stats import zscore
@@ -157,6 +158,27 @@ def gen_voxel_pca_online(data, train_idx, test_idx, params):
     vox_pca_test = pd.DataFrame(vox_pca[test_idx], columns=['PCA_{}'.format(i+1) for i in range(vox_pca.shape[1])])
     return vox_pca_train, vox_pca_test
 
+def gen_masked_voxel_pca_online(data, train_idx, test_idx, params):
+    vox_path = data.iloc[train_idx][params['tag']].tolist()
+    mask = image.load_img(params['mask_path']).get_fdata()
+    train_vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
+    train_vox_arr = train_vox_arr[:, mask>0]
+    train_vox_arr = train_vox_arr.reshape((train_vox_arr.shape[0], -1))
+    train_vox_arr = zscore(train_vox_arr, axis=1)
+    pca_transformer = PCA(n_components=params['n_components'], random_state=0)
+    pca_transformer.fit_transform(train_vox_arr)
+    pca_transformer.fit(train_vox_arr)
+    # transform both train and test data
+    vox_path = data[params['tag']].tolist()
+    vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
+    vox_arr = vox_arr[:, mask>0]
+    vox_arr = vox_arr.reshape((vox_arr.shape[0], -1))
+    vox_arr = zscore(vox_arr, axis=1)
+    vox_pca = pca_transformer.transform(vox_arr)
+    vox_pca_train = pd.DataFrame(vox_pca[train_idx], columns=['PCA_{}'.format(i+1) for i in range(vox_pca.shape[1])])
+    vox_pca_test = pd.DataFrame(vox_pca[test_idx], columns=['PCA_{}'.format(i+1) for i in range(vox_pca.shape[1])])
+    return vox_pca_train, vox_pca_test
+
 def gen_feature_pca_online(data, train_idx, test_idx, params):
     features = getPandas(params['json_tag'])
     if params['use_key']:
@@ -198,6 +220,7 @@ Feature_LUT = {
     'ica_feature_online': gen_feature_ica_online,
     'pca_voxel_online': gen_voxel_pca_online,
     'pca_feature_online': gen_feature_pca_online,
+    'pca_masked_voxel_online': gen_masked_voxel_pca_online,
     't1_radiomic': load_radiomics,
     't1_radiomic_full': load_radiomics,
     'gm_radiomic': load_radiomics,

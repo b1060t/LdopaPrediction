@@ -6,7 +6,7 @@
             "params":
             {
                 "n_components": 35,
-                "tag": "CAT12_WM"
+                "tag": "CAT12_GM"
             }
         },
         "ica_feature_online":
@@ -33,6 +33,15 @@
                 "n_components": 20,
                 "json_tag": "pat_roivol",
                 "use_key": true
+            }
+        },
+        "pca_masked_voxel_online":
+        {
+            "params":
+            {
+                "n_components": 0.999,
+                "tag": "AGE_CORRECTED_SGM",
+                "mask_path": "data/bin/agecorrection/corrected_mask.nii"
             }
         },
         "t1_radiomic_full":

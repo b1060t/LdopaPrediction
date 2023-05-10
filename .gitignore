@@ -6,4 +6,6 @@ ref.py
 test*
 code/matlab/*.json
 code/matlab/spm
+code/matlab/corrected
+code/matlab/uncorrected
 **/__pycache__

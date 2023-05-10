@@ -203,10 +203,10 @@ def preprocCAT12(filename):
     #seg.inputs.own_atlas = [os.path.abspath(os.path.join('data', 'bin', 'aal3.nii'))]
     
     smooth = Node(Smooth(), name='smooth')
-    smooth.inputs.fwhm = 4
+    smooth.inputs.fwhm = 8
     
     msk = Node(ApplyMask(), name='msk')
-    msk.inputs.mask_file = os.path.abspath(os.path.join('data', 'bin', 'rbrainmask_T1.nii'))
+    msk.inputs.mask_file = os.path.abspath(os.path.join('data', 'bin', 'brainmask_GM.nii'))
     
     sink = Node(nio.DataSink(), name='sink')
     sink.inputs.base_directory = os.path.abspath(os.path.join('data', 'subj'))
