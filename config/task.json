@@ -34,7 +34,7 @@
             "output": "CAT",
             "continuous": false,
             "stratify": true,
-            "random_state": 1,
+            "random_state": 100,
             "models": [
                 {
                     "name": "svc",

@@ -18,6 +18,15 @@
                 "use_key": false
             }
         },
+        "ica_masked_voxel_online":
+        {
+            "params":
+            {
+                "n_components": 20,
+                "tag": "AGE_CORRECTED_SGM",
+                "mask_path": "data/bin/agecorrection/corrected_mask.nii"
+            }
+        },
         "pca_voxel_online":
         {
             "params":
@@ -40,6 +49,14 @@
             "params":
             {
                 "n_components": 0.999,
+                "tag": "AGE_CORRECTED_SGM",
+                "mask_path": "data/bin/agecorrection/corrected_mask.nii"
+            }
+        },
+        "masked_voxel_online":
+        {
+            "params":
+            {
                 "tag": "AGE_CORRECTED_SGM",
                 "mask_path": "data/bin/agecorrection/corrected_mask.nii"
             }
