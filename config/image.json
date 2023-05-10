@@ -110,6 +110,15 @@
             {
                 "json_tag": "pat_malpem"
             }
+        },
+        "threshold_sgm":
+        {
+            "params":
+            {
+                "n_components": 70,
+                "threshold": 0.2,
+                "tag": "AGE_CORRECTED_SGM"
+            }
         }
     }
 }

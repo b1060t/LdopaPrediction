@@ -247,6 +247,29 @@ def gen_feature_pca_online(data, train_idx, test_idx, params):
         feature_pca_test = pd.DataFrame(feature_pca[test_idx], columns=['PCA_{}'.format(i+1) for i in range(feature_pca.shape[1])])
         return feature_pca_train, feature_pca_test
 
+def gen_filtered_voxel(data, train_idx, test_idx, params):
+    data = data.iloc[train_idx + test_idx]
+    sep = len(train_idx)
+    imgs = data[params['tag']].tolist()
+    img_list = [nib.load(img).get_fdata() for img in imgs]
+    imgs = np.array(img_list)
+    # Use train data to generate mask
+    mean_img = np.mean(imgs[:sep], axis=0)
+    mean_img[mean_img < params['threshold']] = 0
+    mean_img[mean_img >= params['threshold']] = 1
+    img_list = [img[mean_img > 0] for img in img_list]
+    img_list = [img.reshape(-1) for img in img_list]
+    img_list = [zscore(img) for img in img_list]
+    #PCA
+    train_arr = np.array(img_list[:sep])
+    full_arr = np.array(img_list)
+    pca_transformer = PCA(n_components=params['n_components'], random_state=0)
+    pca_transformer.fit(train_arr)
+    pca_arr = pca_transformer.transform(full_arr)
+    vox_filtered_train = pd.DataFrame(pca_arr[:sep], columns=['VOX_{}'.format(i+1) for i in range(len(pca_arr[0]))])
+    vox_filtered_test = pd.DataFrame(pca_arr[sep:], columns=['VOX_{}'.format(i+1) for i in range(len(pca_arr[0]))])
+    return vox_filtered_train, vox_filtered_test
+
 Feature_LUT = {
     'ica_voxel_online': gen_voxel_ica_online,
     'ica_feature_online': gen_feature_ica_online,
@@ -255,6 +278,7 @@ Feature_LUT = {
     'pca_feature_online': gen_feature_pca_online,
     'pca_masked_voxel_online': gen_masked_voxel_pca_online,
     'masked_voxel_online': gen_masked_voxel_online,
+    'threshold_sgm': gen_filtered_voxel,
     't1_radiomic': load_radiomics,
     't1_radiomic_full': load_radiomics,
     'gm_radiomic': load_radiomics,
