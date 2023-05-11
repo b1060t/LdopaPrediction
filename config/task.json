@@ -34,7 +34,7 @@
             "output": "CAT",
             "continuous": false,
             "stratify": true,
-            "random_state": 100,
+            "random_state": 1,
             "models": [
                 {
                     "name": "svc",
@@ -65,7 +65,8 @@
                 }
             ],
             "metrics": [
-                ["AUC", true]
+                ["AUC", true],
+                ["Accuracy", false]
             ],
             "plot": [
                 ["plot_roc", true],

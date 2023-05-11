@@ -16,7 +16,7 @@ from src.model.lut import Model_LUT, Metrics_LUT, Plot_LUT
 from src.model.feature import Feature_LUT
 from src.model.stats import stats_analyze
 
-def run(dataname, TASKS, FEATURES, log_func=print, plot_flag=True, feature_selection=True):
+def run(dataname, TASKS, FEATURES, log_func=print, plot_flag=True, feature_selection=True, cal_baselines=False):
     data = getPandas(dataname)
     prefix = dataname.split('_')[0]
     task_config = getConfig('task')
@@ -144,9 +144,10 @@ def run(dataname, TASKS, FEATURES, log_func=print, plot_flag=True, feature_selec
             x_test_list = [x_clinic_test, x_clinic_img_test]
             info_list = ['Demo + Clinic:', 'Demo + Clinic + Img:']
             
-            x_train_list = [x_clinic_img_train]
-            x_test_list = [x_clinic_img_test]
-            info_list = ['Demo + Clinic + Img:']
+            if not cal_baselines:
+                x_train_list = [x_clinic_img_train]
+                x_test_list = [x_clinic_img_test]
+                info_list = ['Demo + Clinic + Img:']
             
             #Main loop
             for i in range(len(info_list)):
@@ -194,23 +195,23 @@ def run(dataname, TASKS, FEATURES, log_func=print, plot_flag=True, feature_selec
                         from sklearn import metrics
                         y_train_np = y_train[task['output']].to_numpy()
                         y_test_np = y_test[task['output']].to_numpy()
-                        ci_train = bootstrap((y_train_np, train_pred[:, 1]), statistic=metrics.roc_auc_score, n_resamples=1000, paired=True, random_state=random_state)
-                        ci_test = bootstrap((y_test_np, test_pred[:, 1]), statistic=metrics.roc_auc_score, n_resamples=1000, paired=True, random_state=random_state)
+                        #ci_train = bootstrap((y_train_np, train_pred[:, 1]), statistic=metrics.roc_auc_score, n_resamples=1000, paired=True, random_state=random_state)
+                        #ci_test = bootstrap((y_test_np, test_pred[:, 1]), statistic=metrics.roc_auc_score, n_resamples=1000, paired=True, random_state=random_state)
                         
                         log_func('{} train {}\n'.format(metric[0],
                                                             metric_func(y_train_np, train_pred)
                                                             ))
-                        log_func('{}\n'.format(ci_train.confidence_interval))
+                        #log_func('{}\n'.format(ci_train.confidence_interval))
                         log_func('{} test {}\n'.format(metric[0],
                                                             metric_func(y_test_np, test_pred)
                                                             ))
-                        log_func('{}\n'.format(ci_test.confidence_interval))
-                        plot_list = task['plot']
-                        if plot_flag:
-                            for plot in plot_list:
-                                plot_func = Plot_LUT[plot[0]]
-                                pred_func = model_instance.predict_proba if plot[1] else model_instance.predict
-                                train_pred = pred_func(x_train)
-                                test_pred = pred_func(x_test)
-                                plot_func(y_test[task['output']].to_numpy(), test_pred)
-                                plt.show()
+                        #log_func('{}\n'.format(ci_test.confidence_interval))
+                    plot_list = task['plot']
+                    if plot_flag:
+                        for plot in plot_list:
+                            plot_func = Plot_LUT[plot[0]]
+                            pred_func = model_instance.predict_proba if plot[1] else model_instance.predict
+                            train_pred = pred_func(x_train)
+                            test_pred = pred_func(x_test)
+                            plot_func(y_test[task['output']].to_numpy(), test_pred)
+                            plt.show()

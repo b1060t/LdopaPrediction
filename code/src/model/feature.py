@@ -42,8 +42,8 @@ def load_volume(data, train_idx, test_idx, params):
 def load_roivol(data, train_idx, test_idx, params):
     df_roivol = getPandas(params['json_tag'])
     # only use columns contains hammer
-    #df_roivol = df_roivol[df_roivol.columns[df_roivol.columns.str.contains('thalamus_gm')]]
-    df_roivol = df_roivol.drop(['KEY'], axis=1)
+    df_roivol = df_roivol[df_roivol.columns[df_roivol.columns.str.contains('cobra')]]
+    #df_roivol = df_roivol.drop(['KEY'], axis=1)
     roivol_train = df_roivol.iloc[train_idx]
     roivol_test = df_roivol.iloc[test_idx]
     return roivol_train, roivol_test
@@ -82,13 +82,16 @@ def gen_voxel_ica_online(data, train_idx, test_idx, params):
     vox_path = data.iloc[train_idx][params['tag']].tolist()
     train_vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
     train_vox_arr = train_vox_arr.reshape(train_vox_arr.shape[0], -1)
+    hc_path = getPandas('hc_data')[params['tag']].tolist()
+    hc_vox_arr = np.array([nib.load(path).get_fdata() for path in hc_path])
+    hc_vox_arr = hc_vox_arr.reshape(hc_vox_arr.shape[0], -1)
+    hc_vox_arr = train_vox_arr
     # drop 0, save mask
-    mask = np.all(train_vox_arr==0, axis=0)
-    train_vox_arr = train_vox_arr[:, ~mask]
-    train_vox_arr = zscore(train_vox_arr, axis=1)
+    mask = np.all(hc_vox_arr==0, axis=0)
+    hc_vox_arr = hc_vox_arr[:, ~mask]
+    hc_vox_arr = zscore(hc_vox_arr, axis=1)
     ica_transformer = FastICA(n_components=params['n_components'], random_state=0)
-    ica_transformer.fit_transform(train_vox_arr)
-    ica_transformer.fit(train_vox_arr)
+    ica_transformer.fit(hc_vox_arr)
     # transform both train and test data
     vox_path = data[params['tag']].tolist()
     vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
@@ -103,17 +106,29 @@ def gen_voxel_ica_online(data, train_idx, test_idx, params):
 def gen_masked_voxel_ica_online(data, train_idx, test_idx, params):
     vox_path = data.iloc[train_idx][params['tag']].tolist()
     mask = image.load_img(params['mask_path']).get_fdata()
-    train_vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
-    train_vox_arr = train_vox_arr[:, mask>0]
+    #train_vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
+    #train_vox_arr = train_vox_arr[:, mask>0]
+    train_vox_arr = np.zeros((len(vox_path), np.sum(mask>0)))
+    # Avoid memory error
+    for i, path in enumerate(vox_path):
+        img = nib.load(path).get_fdata()
+        train_vox_arr[i] = img[mask>0]
     train_vox_arr = train_vox_arr.reshape((train_vox_arr.shape[0], -1))
     train_vox_arr = zscore(train_vox_arr, axis=1)
     ica_transformer = FastICA(n_components=params['n_components'], random_state=0)
     ica_transformer.fit(train_vox_arr)
     # transform both train and test data
     vox_path = data[params['tag']].tolist()
-    vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
-    vox_arr = vox_arr[:, mask>0]
-    vox_arr = vox_arr.reshape((vox_arr.shape[0], -1))
+    #vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
+    #vox_arr = vox_arr[:, mask>0]
+    vox_arr = np.zeros((len(vox_path), np.sum(mask>0)))
+    # Avoid memory error
+    for i, path in enumerate(vox_path):
+        img = nib.load(path).get_fdata()
+        vox_arr[i] = img[mask>0]
+        # check if all values are 0
+        if np.all(vox_arr[i] == 0):
+            print(path)
     vox_arr = zscore(vox_arr, axis=1)
     vox_ica = ica_transformer.transform(vox_arr)
     vox_ica_train = pd.DataFrame(vox_ica[train_idx], columns=['ICA_{}'.format(i+1) for i in range(vox_ica.shape[1])])
@@ -181,18 +196,29 @@ def gen_voxel_pca_online(data, train_idx, test_idx, params):
 def gen_masked_voxel_pca_online(data, train_idx, test_idx, params):
     vox_path = data.iloc[train_idx][params['tag']].tolist()
     mask = image.load_img(params['mask_path']).get_fdata()
-    train_vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
-    train_vox_arr = train_vox_arr[:, mask>0]
+    #train_vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
+    #train_vox_arr = train_vox_arr[:, mask>0]
+    train_vox_arr = np.zeros((len(vox_path), np.sum(mask>0)))
+    # Avoid memory error
+    for i, path in enumerate(vox_path):
+        img = nib.load(path).get_fdata()
+        train_vox_arr[i] = img[mask>0]
     train_vox_arr = train_vox_arr.reshape((train_vox_arr.shape[0], -1))
     train_vox_arr = zscore(train_vox_arr, axis=1)
     pca_transformer = PCA(n_components=params['n_components'], random_state=0)
-    pca_transformer.fit_transform(train_vox_arr)
     pca_transformer.fit(train_vox_arr)
     # transform both train and test data
     vox_path = data[params['tag']].tolist()
-    vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
-    vox_arr = vox_arr[:, mask>0]
-    vox_arr = vox_arr.reshape((vox_arr.shape[0], -1))
+    #vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
+    #vox_arr = vox_arr[:, mask>0]
+    vox_arr = np.zeros((len(vox_path), np.sum(mask>0)))
+    # Avoid memory error
+    for i, path in enumerate(vox_path):
+        img = nib.load(path).get_fdata()
+        vox_arr[i] = img[mask>0]
+        # check if all values are 0
+        if np.all(vox_arr[i] == 0):
+            print(path)
     vox_arr = zscore(vox_arr, axis=1)
     vox_pca = pca_transformer.transform(vox_arr)
     vox_pca_train = pd.DataFrame(vox_pca[train_idx], columns=['PCA_{}'.format(i+1) for i in range(vox_pca.shape[1])])
@@ -200,11 +226,16 @@ def gen_masked_voxel_pca_online(data, train_idx, test_idx, params):
     return vox_pca_train, vox_pca_test
 
 def gen_masked_voxel_online(data, train_idx, test_idx, params):
-    vox_path = data.iloc[train_idx][params['tag']].tolist()
-    mask = image.load_img(params['mask_path']).get_fdata()
     vox_path = data[params['tag']].tolist()
-    vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
-    vox_arr = vox_arr[:, mask>0]
+    mask = image.load_img(params['mask_path']).get_fdata()
+    length = np.sum(mask>0)
+    vox_arr = np.zeros((len(vox_path), length))
+    #vox_arr = np.array([nib.load(path).get_fdata() for path in vox_path])
+    #vox_arr = vox_arr[:, mask>0]
+    # Avoid memory error
+    for i, path in enumerate(vox_path):
+        img = nib.load(path).get_fdata()
+        vox_arr[i] = img[mask>0]
     vox_arr = vox_arr.reshape((vox_arr.shape[0], -1))
     vox_arr = zscore(vox_arr, axis=1)
     vox_pca_train = pd.DataFrame(vox_arr[train_idx], columns=['VOX_{}'.format(i+1) for i in range(vox_arr.shape[1])])
@@ -248,19 +279,19 @@ def gen_feature_pca_online(data, train_idx, test_idx, params):
         return feature_pca_train, feature_pca_test
 
 def gen_filtered_voxel(data, train_idx, test_idx, params):
-    data = data.iloc[train_idx + test_idx]
+    train_data = data.iloc[train_idx].reset_index(drop=True)
+    test_data = data.iloc[test_idx].reset_index(drop=True)
+    data = pd.concat([train_data, test_data], axis=0).reset_index(drop=True)
     sep = len(train_idx)
     imgs = data[params['tag']].tolist()
     img_list = [nib.load(img).get_fdata() for img in imgs]
     imgs = np.array(img_list)
-    # Use train data to generate mask
     mean_img = np.mean(imgs[:sep], axis=0)
     mean_img[mean_img < params['threshold']] = 0
     mean_img[mean_img >= params['threshold']] = 1
     img_list = [img[mean_img > 0] for img in img_list]
     img_list = [img.reshape(-1) for img in img_list]
     img_list = [zscore(img) for img in img_list]
-    #PCA
     train_arr = np.array(img_list[:sep])
     full_arr = np.array(img_list)
     pca_transformer = PCA(n_components=params['n_components'], random_state=0)
@@ -285,5 +316,7 @@ Feature_LUT = {
     'tiv_gmv': load_volume,
     'roi_volume': load_roivol,
     'surf_info': load_surface,
-    'malpem_vol': load_malpemvol
+    'malpem_vol': load_malpemvol,
+
+    'pca_rTHA_masked_voxel_online': gen_masked_voxel_pca_online
 }

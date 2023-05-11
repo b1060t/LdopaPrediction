@@ -22,7 +22,7 @@
         {
             "params":
             {
-                "n_components": 20,
+                "n_components": 35,
                 "tag": "AGE_CORRECTED_SGM",
                 "mask_path": "data/bin/agecorrection/corrected_mask.nii"
             }
@@ -48,7 +48,7 @@
         {
             "params":
             {
-                "n_components": 0.999,
+                "n_components": 35,
                 "tag": "AGE_CORRECTED_SGM",
                 "mask_path": "data/bin/agecorrection/corrected_mask.nii"
             }
@@ -115,9 +115,18 @@
         {
             "params":
             {
-                "n_components": 70,
-                "threshold": 0.2,
+                "n_components": 0.999,
+                "threshold": 0.3,
                 "tag": "AGE_CORRECTED_SGM"
+            }
+        },
+        "pca_rTHA_masked_voxel_online":
+        {
+            "params":
+            {
+                "n_components": 0.9,
+                "tag": "ANTs_Reg",
+                "mask_path": "data/bin/subcortical_roi/rGPe.nii"
             }
         }
     }
