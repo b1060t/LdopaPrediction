@@ -2,11 +2,13 @@ from process.preproc_img import imgRedir, preprocFSL, preprocCAT12
 from src.feature.texture import genTextureFeature, dropByCorrelation
 from src.feature.surface import surfCAT12
 from src.utils.data import getPandas, writePandas, getConfig
+from process.preproc_fmriprep import build_pat_bids
 import os
 os.chdir('..')
 import glob
 
-preprocCAT12('pat_data')
+build_pat_bids()
+#preprocCAT12('pat_data')
 #preprocFSL('pat_data')
 #genTextureFeature('pat_data', 'ANTs_Reg')
 #dropByCorrelation('pat_data', 'pat_ANTs_Reg_radiomic', 'CAT_MDS')
