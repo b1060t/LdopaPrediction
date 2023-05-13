@@ -6,6 +6,21 @@ import nibabel as nib
 sys.path.append('..')
 from src.utils.data import writePandas, getPandas, getConfig
 
+def run_fmriprep():
+    # !!! have to process subjects one by one to avoid segmentation fault
+    data = getPandas('pat_data')
+    conf = getConfig('data')
+    train_inds = conf['indices']['pat']['train']
+    test_inds = conf['indices']['pat']['test']
+    data = data.loc[train_inds + test_inds].reset_index(drop=True)
+    keys = data['KEY'].values
+    for i, key in enumerate(keys):
+        print('Processing {}'.format(key))
+        cmd = 'fmriprep-docker data/bids/pat_raw data/bids/pat_fmriprep -i nipreps/fmriprep:latest --mem 8192 --output-space MNI152NLin2009cAsym --fs-no-reconall --anat-only --skip_bids_validation'
+        cmd += ' --participant-label {}'.format(key)
+        if not os.path.exists(os.path.join('data', 'bids', 'pat_fmriprep', 'sub-{}'.format(key))):
+            os.system(cmd)
+
 def build_pat_bids():
     data = getPandas('pat_data')
     conf = getConfig('data')
