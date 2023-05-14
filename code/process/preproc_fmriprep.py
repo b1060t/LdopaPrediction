@@ -19,6 +19,7 @@ def run_fmriprep():
         cmd = 'fmriprep-docker data/bids/pat_raw data/bids/pat_fmriprep -i nipreps/fmriprep:latest --mem 8192 --output-space MNI152NLin2009cAsym --fs-no-reconall --anat-only --skip_bids_validation'
         cmd += ' --participant-label {}'.format(key)
         if not os.path.exists(os.path.join('data', 'bids', 'pat_fmriprep', 'sub-{}'.format(key))):
+            # Mannually check 3132V10I864550
             os.system(cmd)
 
 def build_pat_bids():
