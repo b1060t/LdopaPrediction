@@ -4,7 +4,7 @@ import pandas as pd
 import sys
 import nibabel as nib
 sys.path.append('..')
-from src.utils.data import writePandas, getPandas, getConfig
+from src.utils.data import writePandas, getPandas, getConfig, getDict
 
 def run_fmriprep():
     # !!! have to process subjects one by one to avoid segmentation fault
@@ -65,3 +65,23 @@ def build_hc_bids():
         new_header.set_data_shape(new_data.shape)
         new_nii_file = nib.Nifti1Image(new_data, nii_file.affine, new_header)
         nib.save(new_nii_file, os.path.join('data', 'bids', 'hc_raw', 'sub-{}'.format(key), 'anat', 'sub-{}_T1w.nii'.format(key)))
+
+def gen_pat_roi():
+    data = getPandas('pat_data')
+    conf = getConfig('data')
+    train_inds = conf['indices']['pat']['train']
+    test_inds = conf['indices']['pat']['test']
+    data = data.loc[train_inds + test_inds].reset_index(drop=True)
+    keys = data['KEY'].values
+    mats = data['fmriprep_MNI2native'].values
+    reference = data['fmriprep_native'].values
+    mask_tags = getDict('subcortical_roi')
+    roi_path = [os.path.join('data', 'bin', 'subcortical_roi', key + '.nii') for key in mask_tags.keys()]
+    for i, key in enumerate(keys):
+        for j, roi in enumerate(roi_path):
+            print('Processing {} {}'.format(key, roi))
+            output = os.path.join('data', 'bids', 'pat_fmriprep', 'sub-{}'.format(key), 'anat', 'sub-{}_label-{}_probseg.nii.gz'.format(key, mask_tags[key]))
+            #!!! .h5 file not supported by antsApplyTransforms?
+            cmd = 'antsApplyTransforms -d 3 -i {} -r {} -o {} -n NearestNeighbor -t {}'.format(roi, reference[i], output, mats[i])
+            #!!!
+            os.system(cmd)

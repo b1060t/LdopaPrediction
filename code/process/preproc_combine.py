@@ -23,15 +23,18 @@ def combinePatData():
     data['CAT12_SGM'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'smwp1raw_masked.nii'
     data['CAT12_WM'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'mwp2raw.nii'
     data['CAT12_CSF'] = data['IMG_ROOT'] + os.sep + 'cat12' + os.sep + 'mri' + os.sep + 'mwp3raw.nii'
-    #fmriprep
+    #fmriprep (training/test set only to save space)
     data['BIDS_ROOT'] = data['KEY'].apply(lambda s: os.path.join('data', 'bids', 'pat_fmriprep', 'sub-{}'.format(s)))
+    data['fmriprep_MNI'] = data['BIDS_ROOT'] + os.sep + 'anat' + os.sep + 'sub-{}_space-MNI152NLin2009cAsym_desc-preproc_T1w.nii.gz'.format(data['KEY'])
     data['fmriprep_MNI_GM'] = data['BIDS_ROOT'] + os.sep + 'anat' + os.sep + 'sub-{}_space-MNI152NLin2009cAsym_label-GM_probseg.nii.gz'.format(data['KEY'])
     data['fmriprep_MNI_WM'] = data['BIDS_ROOT'] + os.sep + 'anat' + os.sep + 'sub-{}_space-MNI152NLin2009cAsym_label-WM_probseg.nii.gz'.format(data['KEY'])
     data['fmriprep_MNI_CSF'] = data['BIDS_ROOT'] + os.sep + 'anat' + os.sep + 'sub-{}_space-MNI152NLin2009cAsym_label-CSF_probseg.nii.gz'.format(data['KEY'])
+    data['fmriprep_MNI_brainmask'] = data['BIDS_ROOT'] + os.sep + 'anat' + os.sep + 'sub-{}_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz'.format(data['KEY'])
+    data['fmriprep_native'] = data['BIDS_ROOT'] + os.sep + 'anat' + os.sep + 'sub-{}_desc-preproc_T1w.nii.gz'.format(data['KEY'])
     data['fmriprep_native_GM'] = data['BIDS_ROOT'] + os.sep + 'anat' + os.sep + 'sub-{}_label-GM_probseg.nii.gz'.format(data['KEY'])
     data['fmriprep_native_WM'] = data['BIDS_ROOT'] + os.sep + 'anat' + os.sep + 'sub-{}_label-WM_probseg.nii.gz'.format(data['KEY'])
     data['fmriprep_native_CSF'] = data['BIDS_ROOT'] + os.sep + 'anat' + os.sep + 'sub-{}_label-CSF_probseg.nii.gz'.format(data['KEY'])
-    data['fmriprep_brainmask'] = data['BIDS_ROOT'] + os.sep + 'anat' + os.sep + 'sub-{}_desc-brain_mask.nii.gz'.format(data['KEY'])
+    data['fmriprep_native_brainmask'] = data['BIDS_ROOT'] + os.sep + 'anat' + os.sep + 'sub-{}_desc-brain_mask.nii.gz'.format(data['KEY'])
     data['fmriprep_native2MNI'] = data['BIDS_ROOT'] + os.sep + 'anat' + os.sep + 'sub-{}_from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5'.format(data['KEY'])
     data['fmriprep_MNI2native'] = data['BIDS_ROOT'] + os.sep + 'anat' + os.sep + 'sub-{}_from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5'.format(data['KEY'])
     data.rename(columns={'AGE_AT_VISIT': 'AGE'}, inplace=True)

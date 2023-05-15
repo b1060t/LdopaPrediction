@@ -34,9 +34,39 @@ def genTextureFeature(filename, pathlabel):
     prefix = filename.split('_')[0]
     writePandas(prefix+'_'+pathlabel+'_radiomic', data_radiomic)
 
-def genMalpemTextureFeature(filename, pathlabel):
-    pass
-    
+# Native space texture!!!
+def genSubjTextureFeature(filename, pathlabel):
+    data = getPandas(filename)
+    conf = getConfig('data')
+    idx = conf['indices']['pat']['train'] + conf['indices']['pat']['test']
+    valid_key_list = data['KEY'].values[idx].tolist()
+    mask_tag = getDict('subcortical_roi')
+    radiomics.logger.setLevel(logging.ERROR)
+    extract = featureextractor.RadiomicsFeatureExtractor()
+    extract.loadParams(os.path.join('config', 'radiomic.yaml'))
+    def cal_radiomics(rec):
+        print('Calculating radiomic features for ' + rec['KEY'] + '...')
+        #skip unprocessed subjects
+        if rec['KEY'] not in valid_key_list:
+            return {
+                'KEY': rec['KEY']
+            }
+        filtered_rst = {}
+        for key in mask_tag.keys():
+            roi = os.path.join('data', 'bids', 'pat_fmriprep', 'sub-{}'.format(rec['KEY']), 'anat', 'sub-{}_label-{}_probseg.nii.gz'.format(rec['KEY'], key))
+            rst = extract.execute(rec[pathlabel], roi)
+            for k, v in rst.items():
+                if ('shape' in k) or ('firstorder' in k) or ('glcm' in k) or ('gldm' in k) or ('glrlm' in k) or ('glszm' in k):
+                    val = v if (type(v) == float) else v[0] 
+                    filtered_rst[key + '_' + k] = val
+        filtered_rst['KEY'] = rec['KEY']
+        return filtered_rst
+    rsts = list(map(cal_radiomics, data))
+    data_radiomic = pd.DataFrame(rsts)
+    data_radiomic = data_radiomic.fillna(0)
+    prefix = filename.split('_')[0]
+    writePandas(prefix+'_'+pathlabel+'_radiomic', data_radiomic)
+
 def dropByCorrelation(data_filename, radiomic_filename, y_label, threshold=0.8):
     import matplotlib.pyplot as plt
     import seaborn as sns
