@@ -33,9 +33,45 @@ def genTextureFeature(filename, pathlabel):
     data_radiomic['KEY'] = data['KEY']
     prefix = filename.split('_')[0]
     writePandas(prefix+'_'+pathlabel+'_radiomic', data_radiomic)
+    
+def genSubjTextureFeature(filename, pathlabel):
+    data = getPandas(filename)
+    conf = getConfig('data')
+    idx = conf['indices']['pat']['train'] + conf['indices']['pat']['test']
+    valid_key_list = data['KEY'].values[idx].tolist()
+    radiomics.logger.setLevel(logging.ERROR)
+    extract = featureextractor.RadiomicsFeatureExtractor()
+    extract.loadParams(os.path.join('config', 'radiomic.yaml'))
+    mask_tags = getDict('subcortical_roi')
+    def cal_radiomics(rec):
+        print('Calculating radiomic features for ' + rec['KEY'] + '...')
+        if rec['KEY'] not in valid_key_list:
+            return {
+                'KEY': rec['KEY']
+            }
+        path = rec[pathlabel]
+        filtered_rst = {}
+        for key in mask_tags.keys():
+            mask_path = os.path.join('data', 'bin', 'subcortical_roi', key + '.nii')
+            rst = extract.execute(path, mask_path)
+            for k, v in rst.items():
+                if ('firstorder' in k) or ('glcm' in k) or ('gldm' in k) or ('glrlm' in k) or ('glszm' in k):
+                #if ('firstorder' in k):
+                    filtered_rst[key + '_' + k] = v
+        filtered_rst['KEY'] = rec['KEY']
+        return filtered_rst
+    rsts = list(data.apply(cal_radiomics, axis=1))
+    data_radiomic = pd.DataFrame(rsts)
+    key_df = data_radiomic['KEY']
+    data_radiomic = data_radiomic.drop(columns=['KEY'])
+    data_radiomic = data_radiomic.astype(float)
+    data_radiomic['KEY'] = key_df
+    data_radiomic = data_radiomic.fillna(0)
+    prefix = filename.split('_')[0]
+    writePandas(prefix+'_'+pathlabel+'_radiomic', data_radiomic)
 
 # Native space texture!!!
-def genSubjTextureFeature(filename, pathlabel):
+def genSubjTextureFeatureByROI(filename, pathlabel):
     data = getPandas(filename)
     conf = getConfig('data')
     idx = conf['indices']['pat']['train'] + conf['indices']['pat']['test']
@@ -45,24 +81,28 @@ def genSubjTextureFeature(filename, pathlabel):
     extract = featureextractor.RadiomicsFeatureExtractor()
     extract.loadParams(os.path.join('config', 'radiomic.yaml'))
     def cal_radiomics(rec):
-        print('Calculating radiomic features for ' + rec['KEY'] + '...')
         #skip unprocessed subjects
         if rec['KEY'] not in valid_key_list:
             return {
                 'KEY': rec['KEY']
             }
         filtered_rst = {}
+        print('Calculating radiomic features for ' + rec['KEY'] + '...')
         for key in mask_tag.keys():
             roi = os.path.join('data', 'bids', 'pat_fmriprep', 'sub-{}'.format(rec['KEY']), 'anat', 'sub-{}_label-{}_probseg.nii.gz'.format(rec['KEY'], key))
+            print(rec[pathlabel])
             rst = extract.execute(rec[pathlabel], roi)
             for k, v in rst.items():
                 if ('shape' in k) or ('firstorder' in k) or ('glcm' in k) or ('gldm' in k) or ('glrlm' in k) or ('glszm' in k):
-                    val = v if (type(v) == float) else v[0] 
-                    filtered_rst[key + '_' + k] = val
+                    filtered_rst[key + '_' + k] = v
         filtered_rst['KEY'] = rec['KEY']
         return filtered_rst
-    rsts = list(map(cal_radiomics, data))
+    rsts = list(data.apply(cal_radiomics, axis=1))
     data_radiomic = pd.DataFrame(rsts)
+    key_df = data_radiomic['KEY']
+    data_radiomic = data_radiomic.drop(columns=['KEY'])
+    data_radiomic = data_radiomic.astype(float)
+    data_radiomic['KEY'] = key_df
     data_radiomic = data_radiomic.fillna(0)
     prefix = filename.split('_')[0]
     writePandas(prefix+'_'+pathlabel+'_radiomic', data_radiomic)

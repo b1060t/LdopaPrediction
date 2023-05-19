@@ -312,6 +312,18 @@
                 "class": "CAT",
                 "threshold": 0.8,
                 "path": "data/json/pat_ANTs_Reg_radiomic_CAT_0.8.json"
+            },
+            {
+                "image": "pat_fmriprep_MNI_radiomic",
+                "class": "CAT",
+                "threshold": 0.8,
+                "path": "data/json/pat_fmriprep_MNI_radiomic_CAT_0.8.json"
+            },
+            {
+                "image": "pat_fmriprep_native_radiomic",
+                "class": "CAT",
+                "threshold": 0.8,
+                "path": "data/json/pat_fmriprep_native_radiomic_CAT_0.8.json"
             }
         ]
     }

@@ -19,7 +19,6 @@ def run_fmriprep():
         cmd = 'fmriprep-docker data/bids/pat_raw data/bids/pat_fmriprep -i nipreps/fmriprep:latest --mem 8192 --output-space MNI152NLin2009cAsym --fs-no-reconall --anat-only --skip_bids_validation'
         cmd += ' --participant-label {}'.format(key)
         if not os.path.exists(os.path.join('data', 'bids', 'pat_fmriprep', 'sub-{}'.format(key))):
-            # Mannually check 3132V10I864550
             os.system(cmd)
 
 def build_pat_bids():
@@ -76,12 +75,16 @@ def gen_pat_roi():
     mats = data['fmriprep_MNI2native'].values
     reference = data['fmriprep_native'].values
     mask_tags = getDict('subcortical_roi')
-    roi_path = [os.path.join('data', 'bin', 'subcortical_roi', key + '.nii') for key in mask_tags.keys()]
+    #roi_path = [os.path.join('data', 'bin', 'subcortical_roi', key + '.nii') for key in mask_tags.keys()]
     for i, key in enumerate(keys):
-        for j, roi in enumerate(roi_path):
+        for j, roi in enumerate(mask_tags.keys()):
+            roi_path = os.path.join('.', 'data', 'bin', 'subcortical_roi', roi + '.nii')
+            output = os.path.join('.', 'data', 'bids', 'pat_fmriprep', 'sub-{}'.format(key), 'anat', 'sub-{}_label-{}_probseg.nii.gz'.format(key, roi))
+            if os.path.exists(output):
+                print('Skipping {} {}'.format(key, roi))
+                continue
             print('Processing {} {}'.format(key, roi))
-            output = os.path.join('data', 'bids', 'pat_fmriprep', 'sub-{}'.format(key), 'anat', 'sub-{}_label-{}_probseg.nii.gz'.format(key, mask_tags[key]))
             #!!! .h5 file not supported by antsApplyTransforms?
-            cmd = 'antsApplyTransforms -d 3 -i {} -r {} -o {} -n NearestNeighbor -t {}'.format(roi, reference[i], output, mats[i])
+            cmd = 'antsApplyTransforms -d 3 -i {} -r {} -o {} -n NearestNeighbor -t {}'.format(roi_path, reference[i], output, mats[i])
             #!!!
             os.system(cmd)
