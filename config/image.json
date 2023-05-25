@@ -72,7 +72,7 @@
         {
             "params":
             {
-                "json_tag": "pat_fmriprep_native_radiomic_CAT_0.8"
+                "json_tag": "pat_ANTs_Reg_radiomic_CAT_0.8"
             }
         },
         "gm_radiomic":

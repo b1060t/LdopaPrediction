@@ -80,9 +80,9 @@ def gen_pat_roi():
         for j, roi in enumerate(mask_tags.keys()):
             roi_path = os.path.join('.', 'data', 'bin', 'subcortical_roi', roi + '.nii')
             output = os.path.join('.', 'data', 'bids', 'pat_fmriprep', 'sub-{}'.format(key), 'anat', 'sub-{}_label-{}_probseg.nii.gz'.format(key, roi))
-            if os.path.exists(output):
-                print('Skipping {} {}'.format(key, roi))
-                continue
+            #if os.path.exists(output):
+                #print('Skipping {} {}'.format(key, roi))
+                #continue
             print('Processing {} {}'.format(key, roi))
             #!!! .h5 file not supported by antsApplyTransforms?
             cmd = 'antsApplyTransforms -d 3 -i {} -r {} -o {} -n NearestNeighbor -t {}'.format(roi_path, reference[i], output, mats[i])

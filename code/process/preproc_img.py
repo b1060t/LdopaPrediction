@@ -77,6 +77,64 @@ def mvRaw(meta):
         shutil.copy(row['IMG_PATH'], os.path.join('data', 'subj', row['KEY'], 'raw', 'raw.nii'))
         
 
+def preprocANTs(file_name):
+    from nipype.pipeline.engine import Workflow, Node
+    from nipype import Function
+    import nipype.interfaces.fsl as fsl
+    fsl.FSLCommand.set_default_output_type('NIFTI')
+    import nipype.interfaces.utility as util
+    from nipype.interfaces.fsl import BET, FAST, ApplyMask
+    from nipype.interfaces.ants import RegistrationSynQuick
+    from nipype.interfaces.spm import Smooth
+    import nipype.interfaces.io as nio
+    
+    data = getPandas(file_name)
+
+    key_list = data['KEY'].tolist()
+
+    wf = Workflow(name='ants2', base_dir=os.path.abspath('tmp'))
+
+    info_src = Node(util.IdentityInterface(fields=['key']), name='info_src')
+    info_src.iterables = ('key', key_list)
+
+    raw_src = Node(nio.DataGrabber(infields=['key'], outfields=['raw']), name='raw_src')
+    raw_src.inputs.base_directory = os.path.abspath(os.path.join('data', 'subj'))
+    raw_src.inputs.sort_filelist = False
+    raw_src.inputs.template = '*'
+    raw_src.inputs.template_args = {
+        'raw': [['key']]
+    }
+    raw_src.inputs.field_template = {
+        'raw': os.path.join('%s', 'raw', 'raw.nii')
+    }
+
+    reg = Node(RegistrationSynQuick(), name='reg')
+    reg.inputs.fixed_image = os.path.abspath(os.path.join('PD25', 'PD25-T1MPRAGE-template-1mm.nii.gz'))
+    reg.inputs.num_threads = 4
+
+    sinker = Node(nio.DataSink(), name='sinker')
+    sinker.inputs.base_directory = os.path.abspath(os.path.join('data', 'subj'))
+    sinker.inputs.parameterization = False
+    sinker.inputs.regexp_substitutions = [
+        ('raw_brain', 'brain'),
+        ('transformWarped', 'reg'),
+        ('pve_0', 'csf'),
+        ('pve_1', 'gm'),
+        ('pve_2', 'wm'),
+    ]
+
+    wf.connect([
+        (info_src, raw_src, [('key', 'key')]),
+        (raw_src, reg, [('raw', 'moving_image')]),
+        (info_src, sinker, [('key', 'container')]),
+        (reg, sinker, [('warped_image', 'ants2.@warped_image')]),
+    ])
+
+    wf.run()
+    
+    data['ANTs_Reg_2'] = data['IMG_ROOT'] + os.sep + 'ants2' + os.sep + 'reg.nii.gz'
+    
+    writePandas(file_name, data)
 
 def preprocFSL(file_name):
     from nipype.pipeline.engine import Workflow, Node

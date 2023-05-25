@@ -1,4 +1,4 @@
-from process.preproc_img import imgRedir, preprocFSL, preprocCAT12
+from process.preproc_img import imgRedir, preprocFSL, preprocCAT12, preprocANTs
 from src.feature.texture import genTextureFeature, dropByCorrelation, genSubjTextureFeature, genSubjTextureFeatureByROI
 from src.feature.surface import surfCAT12
 from src.utils.data import getPandas, writePandas, getConfig
@@ -9,9 +9,10 @@ import glob
 
 #gen_pat_roi()
 #genSubjTextureFeatureByROI('pat_data', 'fmriprep_native')
-#genSubjTextureFeature('pat_data', 'fmriprep_MNI')
-#dropByCorrelation('pat_data', 'pat_fmriprep_MNI_radiomic', 'CAT')
-dropByCorrelation('pat_data', 'pat_fmriprep_native_radiomic', 'CAT')
+#genSubjTextureFeature('pat_data', 'ANTs_Reg')
+#dropByCorrelation('pat_data', 'pat_ANTs_Reg_radiomic', 'CAT')
+preprocANTs('pat_data')
+#dropByCorrelation('pat_data', 'pat_fmriprep_native_radiomic', 'CAT')
 #build_pat_bids()
 #run_fmriprep()
 #preprocCAT12('pat_data')
@@ -78,12 +79,3 @@ dropByCorrelation('pat_data', 'pat_fmriprep_native_radiomic', 'CAT')
     #data[data['KEY'] == key] = rec
 
 #writePandas('pat_data', data)
-
-
-#sub-3116V04I366133
-#sub-3124V04I387308
-#sub-3131V04I423712
-#sub-40366V06
-#sub-40694BL
-#sub-40703BL
-#sub-41486V10
