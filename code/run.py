@@ -9,9 +9,9 @@ import glob
 
 #gen_pat_roi()
 #genSubjTextureFeatureByROI('pat_data', 'fmriprep_native')
-#genSubjTextureFeature('pat_data', 'ANTs_Reg')
-#dropByCorrelation('pat_data', 'pat_ANTs_Reg_radiomic', 'CAT')
-preprocANTs('pat_data')
+#genSubjTextureFeature('pat_data', 'ANTs_Reg_2')
+#dropByCorrelation('pat_data', 'pat_ANTs_Reg_2_radiomic', 'CAT')
+preprocANTs('hc_data')
 #dropByCorrelation('pat_data', 'pat_fmriprep_native_radiomic', 'CAT')
 #build_pat_bids()
 #run_fmriprep()

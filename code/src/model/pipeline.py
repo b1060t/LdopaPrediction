@@ -24,6 +24,8 @@ def run(dataname, TASKS, FEATURES, log_func=print, plot_flag=True, feature_selec
     img_config = getConfig('image')
     group = data_config['data_group']
     rst = {}
+    rst['img'] = {}
+    rst['baseline'] = {}
     
     for task_name in TASKS:
         log_func('Task: {}\n'.format(task_name))
@@ -48,9 +50,6 @@ def run(dataname, TASKS, FEATURES, log_func=print, plot_flag=True, feature_selec
             y_test = y.iloc[test_inds].reset_index(drop=True)
             
             stats_analyze(x_clinic_train, x_clinic_test, y_train, y_test, data_config, log_func)
-
-            baseline_auc = {}
-            img_auc = {}
 
             for random_state in random_states:
             
@@ -128,6 +127,11 @@ def run(dataname, TASKS, FEATURES, log_func=print, plot_flag=True, feature_selec
                             plt.xlabel('Importance')
                             plt.show()
                         log_func('RFE Selected features: {}\n'.format(selected))
+                    selected = [
+                        'rSN_original_glcm_ClusterProminence',
+                        'rCAU_original_gldm_LargeDependenceHighGrayLevelEmphasis',
+                        'rTHA_original_glszm_LargeAreaHighGrayLevelEmphasis'
+                    ]
                 
                     x_img_train = x_img_train[selected]
                     x_img_test = x_img_test[selected]
@@ -177,10 +181,10 @@ def run(dataname, TASKS, FEATURES, log_func=print, plot_flag=True, feature_selec
                         parameters['random_state'] = [random_state]
                         model = Model_LUT[name]
 
-                        if name not in baseline_auc:
-                            baseline_auc[name] = []
-                        if name not in img_auc:
-                            img_auc[name] = []
+                        if name not in rst['baseline']:
+                            rst['baseline'][name] = []
+                        if name not in rst['img']:
+                            rst['img'][name] = []
                     
                         cv = GridSearchCV(
                             model(),
@@ -224,17 +228,17 @@ def run(dataname, TASKS, FEATURES, log_func=print, plot_flag=True, feature_selec
 
                             if metric[0] == 'AUC':
                                 if len(info_list) == 1:
-                                    img_auc[name].append(metric_func(y_test_np, test_pred))
+                                    rst['img'][name].append(metric_func(y_test_np, test_pred))
                                 elif len(info_list) == 2:
                                     if i == 0:
-                                        baseline_auc[name].append(metric_func(y_test_np, test_pred))
+                                        rst['baseline'][name].append(metric_func(y_test_np, test_pred))
                                     else:
-                                        img_auc[name].append(metric_func(y_test_np, test_pred))
+                                        rst['img'][name].append(metric_func(y_test_np, test_pred))
                                 else:
                                     if i == 0:
-                                        baseline_auc[name].append(metric_func(y_test_np, test_pred))
+                                        rst['baseline'][name].append(metric_func(y_test_np, test_pred))
                                     elif i == 2:
-                                        img_auc[name].append(metric_func(y_test_np, test_pred))
+                                        rst['img'][name].append(metric_func(y_test_np, test_pred))
                             
                         plot_list = task['plot']
                         if plot_flag:
@@ -245,4 +249,4 @@ def run(dataname, TASKS, FEATURES, log_func=print, plot_flag=True, feature_selec
                                 test_pred = pred_func(x_test)
                                 plot_func(y_test[task['output']].to_numpy(), test_pred)
                                 plt.show()
-    return baseline_auc, img_auc
+    return rst['baseline'], rst['img']

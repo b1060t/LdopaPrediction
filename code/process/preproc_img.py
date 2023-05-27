@@ -92,7 +92,7 @@ def preprocANTs(file_name):
 
     key_list = data['KEY'].tolist()
 
-    wf = Workflow(name='ants2', base_dir=os.path.abspath('tmp'))
+    wf = Workflow(name='ants', base_dir=os.path.abspath('tmp'))
 
     info_src = Node(util.IdentityInterface(fields=['key']), name='info_src')
     info_src.iterables = ('key', key_list)
@@ -132,9 +132,17 @@ def preprocANTs(file_name):
 
     wf.run()
     
-    data['ANTs_Reg_2'] = data['IMG_ROOT'] + os.sep + 'ants2' + os.sep + 'reg.nii.gz'
+    data['ANTs_Reg'] = data['IMG_ROOT'] + os.sep + 'ants' + os.sep + 'reg.nii.gz'
+    #antsAtroposN4.sh -d 3 -a testWarped.nii.gz -x ../PD25/PD25-atlas-mask-1mm.nii.gz -o seg -c 3 -s nii -p tpm%d.nii.gz -y 2 -y 3 -w 0.25 
     
     writePandas(file_name, data)
+
+def preprocAtropos(file_name):
+    data = getPandas(file_name)
+
+    def atropos(rec):
+        reg_file = os.path.abspath(rec['ANTs_Reg'])
+        img_root = os.path.abspath(rec['IMG_ROOT'])
 
 def preprocFSL(file_name):
     from nipype.pipeline.engine import Workflow, Node
