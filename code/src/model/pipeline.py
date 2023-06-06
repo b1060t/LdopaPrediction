@@ -63,9 +63,9 @@ def run(dataname, TASKS, FEATURES, log_func=print, plot_flag=True, feature_selec
                     x_img_train = x_img_train.join(x_fe_train.reset_index(drop=True))
                     x_img_test = x_img_test.join(x_fe_test.reset_index(drop=True))
                 
-                #scaler = MinMaxScaler()
-                #x_img_train = pd.DataFrame(scaler.fit_transform(x_img_train, y_train), columns=x_img_train.columns)
-                #x_img_test = pd.DataFrame(scaler.transform(x_img_test), columns=x_img_test.columns)
+                scaler = MinMaxScaler()
+                x_img_train = pd.DataFrame(scaler.fit_transform(x_img_train, y_train), columns=x_img_train.columns)
+                x_img_test = pd.DataFrame(scaler.transform(x_img_test), columns=x_img_test.columns)
             
                 isContinuous = task['continuous']
                 if feature_selection:
@@ -127,15 +127,17 @@ def run(dataname, TASKS, FEATURES, log_func=print, plot_flag=True, feature_selec
                             plt.xlabel('Importance')
                             plt.show()
                         log_func('RFE Selected features: {}\n'.format(selected))
-                    selected = [
-                        'rSN_original_glcm_ClusterProminence',
-                        'rCAU_original_gldm_LargeDependenceHighGrayLevelEmphasis',
-                        'rTHA_original_glszm_LargeAreaHighGrayLevelEmphasis'
-                    ]
                 
                     x_img_train = x_img_train[selected]
                     x_img_test = x_img_test[selected]
             
+                #selected = [
+                    #'rTHA_original_gldm_LargeDependenceHighGrayLevelEmphasis',
+                    #'rTHA_original_glszm_LargeAreaHighGrayLevelEmphasis',
+                #]
+                x_img_train = x_img_train[selected]
+                x_img_test = x_img_test[selected]
+                
                 #x_img_train = x_img_train.join(x_param_train)
                 #x_img_test = x_img_test.join(x_param_test)
             

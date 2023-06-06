@@ -3,7 +3,7 @@ import os.path
 import pandas as pd
 import sys
 sys.path.append('..')
-from src.utils.data import writePandas, getPandas
+from src.utils.data import writePandas, getPandas, getConfig
 
 def imgRedir():
     
@@ -92,7 +92,7 @@ def preprocANTs(file_name):
 
     key_list = data['KEY'].tolist()
 
-    wf = Workflow(name='ants', base_dir=os.path.abspath('tmp'))
+    wf = Workflow(name='ants4', base_dir=os.path.abspath('tmp'))
 
     info_src = Node(util.IdentityInterface(fields=['key']), name='info_src')
     info_src.iterables = ('key', key_list)
@@ -110,7 +110,7 @@ def preprocANTs(file_name):
 
     reg = Node(RegistrationSynQuick(), name='reg')
     reg.inputs.fixed_image = os.path.abspath(os.path.join('PD25', 'PD25-T1MPRAGE-template-1mm.nii.gz'))
-    reg.inputs.num_threads = 4
+    reg.inputs.num_threads = 1
 
     sinker = Node(nio.DataSink(), name='sinker')
     sinker.inputs.base_directory = os.path.abspath(os.path.join('data', 'subj'))
@@ -127,12 +127,12 @@ def preprocANTs(file_name):
         (info_src, raw_src, [('key', 'key')]),
         (raw_src, reg, [('raw', 'moving_image')]),
         (info_src, sinker, [('key', 'container')]),
-        (reg, sinker, [('warped_image', 'ants2.@warped_image')]),
+        (reg, sinker, [('warped_image', 'ants4.@warped_image')]),
     ])
 
     wf.run()
     
-    data['ANTs_Reg'] = data['IMG_ROOT'] + os.sep + 'ants' + os.sep + 'reg.nii.gz'
+    data['ANTs_Reg_4'] = data['IMG_ROOT'] + os.sep + 'ants4' + os.sep + 'reg.nii.gz'
     #antsAtroposN4.sh -d 3 -a testWarped.nii.gz -x ../PD25/PD25-atlas-mask-1mm.nii.gz -o seg -c 3 -s nii -p tpm%d.nii.gz -y 2 -y 3 -w 0.25 
     
     writePandas(file_name, data)
@@ -435,3 +435,93 @@ def preprocCAT12(filename):
     writePandas(prefix + '_roivol', roi_df)
     
     writePandas(filename, data)
+
+def ImageNormalization(filename, pathlabel, newlabel, mask):
+    data = getPandas(filename)
+    conf = getConfig('data')
+    used_inds = conf['indices']['pat']['train'] + conf['indices']['pat']['test']
+    proc_data = data.loc[used_inds].reset_index(drop=True)
+    img_roots = proc_data['IMG_ROOT'].tolist()
+    img_list = proc_data[pathlabel].tolist()
+    import nibabel as nib
+    import numpy as np
+    from numpy import ma
+    mask = nib.load(mask).get_data()
+    mask = mask > 0
+    for i in range(len(img_list)):
+        print('Normalizing image ' + str(i) + ' of ' + str(len(img_list)))
+        img = nib.load(img_list[i])
+        affine = img.affine
+        img = img.get_fdata()
+        masked_img = ma.masked_array(img, mask=~mask)
+        mean = np.mean(masked_img)
+        std = np.std(masked_img)
+        img = (img - mean) / std
+        img = nib.Nifti1Image(img, affine)
+        path = os.path.join(img_roots[i], newlabel)
+        nib.save(img, path)
+    img_roots = data['IMG_ROOT'].tolist()
+    img_path = [os.path.join(x, newlabel + '.nii') for x in img_roots]
+    data[newlabel] = img_path
+    writePandas(filename, data)
+
+def ImageMinMaxScale(filename, pathlabel, newlabel, mask):
+    data = getPandas(filename)
+    conf = getConfig('data')
+    used_inds = conf['indices']['pat']['train'] + conf['indices']['pat']['test']
+    proc_data = data.loc[used_inds].reset_index(drop=True)
+    img_roots = proc_data['IMG_ROOT'].tolist()
+    img_list = proc_data[pathlabel].tolist()
+    import nibabel as nib
+    import numpy as np
+    from numpy import ma
+    mask = nib.load(mask).get_data()
+    mask = mask > 0
+    for i in range(len(img_list)):
+        print('Normalizing image ' + str(i) + ' of ' + str(len(img_list)))
+        img = nib.load(img_list[i])
+        affine = img.affine
+        img = img.get_fdata()
+        masked_img = ma.masked_array(img, mask=~mask)
+        min_val = np.min(masked_img)
+        max_val = np.max(masked_img)
+        img = (img - min_val) / (max_val - min_val)
+        img = nib.Nifti1Image(img, affine)
+        path = os.path.join(img_roots[i], newlabel)
+        nib.save(img, path)
+    img_roots = data['IMG_ROOT'].tolist()
+    img_path = [os.path.join(x, newlabel + '.nii') for x in img_roots]
+    data[newlabel] = img_path
+    writePandas(filename, data)
+    
+
+def ImageStatistics(filename, pathlabel, mask):
+    data = getPandas(filename)
+    conf = getConfig('data')
+    used_inds = conf['indices']['pat']['train'] + conf['indices']['pat']['test']
+    proc_data = data.loc[used_inds].reset_index(drop=True)
+    img_roots = proc_data['IMG_ROOT'].tolist()
+    img_list = proc_data[pathlabel].tolist()
+    import nibabel as nib
+    import numpy as np
+    from numpy import ma
+    mask = nib.load(mask).get_data()
+    mask = mask > 0
+    stat = []
+    for i in range(len(img_list)):
+        img = nib.load(img_list[i])
+        img = img.get_fdata()
+        masked_img = ma.masked_array(img, mask=~mask)
+        mean_val = np.mean(masked_img)
+        std_val = np.std(masked_img)
+        min_val = np.min(masked_img)
+        max_val = np.max(masked_img)
+        stat.append({
+            'KEY': proc_data['KEY'][i],
+            'mean': mean_val,
+            'std': std_val,
+            'min': min_val,
+            'max': max_val
+        })
+    stat_df = pd.DataFrame(stat)
+    return stat_df

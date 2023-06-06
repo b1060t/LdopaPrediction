@@ -42,7 +42,7 @@ def load_volume(data, train_idx, test_idx, params):
 def load_roivol(data, train_idx, test_idx, params):
     df_roivol = getPandas(params['json_tag'])
     # only use columns contains hammer
-    df_roivol = df_roivol[df_roivol.columns[df_roivol.columns.str.contains('cobra')]]
+    df_roivol = df_roivol[df_roivol.columns[df_roivol.columns.str.contains(params['used_tag'])]]
     #df_roivol = df_roivol.drop(['KEY'], axis=1)
     roivol_train = df_roivol.iloc[train_idx]
     roivol_test = df_roivol.iloc[test_idx]
@@ -311,7 +311,10 @@ Feature_LUT = {
     'masked_voxel_online': gen_masked_voxel_online,
     'threshold_sgm': gen_filtered_voxel,
     't1_radiomic': load_radiomics,
-    't1_radiomic_full': load_radiomics,
+    'iteration_1': load_radiomics,
+    'iteration_2': load_radiomics,
+    'iteration_3': load_radiomics,
+    'iteration_4': load_radiomics,
     'gm_radiomic': load_radiomics,
     'tiv_gmv': load_volume,
     'roi_volume': load_roivol,
