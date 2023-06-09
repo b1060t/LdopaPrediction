@@ -68,7 +68,7 @@ def run(dataname, TASKS, FEATURES, log_func=print, plot_flag=True, feature_selec
                 x_img_test = pd.DataFrame(scaler.transform(x_img_test), columns=x_img_test.columns)
             
                 isContinuous = task['continuous']
-                if feature_selection:
+                if feature_selection == True:
                     ##mRMR
                     selected = mrmr_classif(X=x_img_train, y=y_train, K=50) if not isContinuous else mrmr_regression(X=x_img_train, y=y_train, K=50)
                     log_func('mRMR Selected features: {}\n'.format(selected))
@@ -130,13 +130,11 @@ def run(dataname, TASKS, FEATURES, log_func=print, plot_flag=True, feature_selec
                 
                     x_img_train = x_img_train[selected]
                     x_img_test = x_img_test[selected]
-            
-                #selected = [
-                    #'rTHA_original_gldm_LargeDependenceHighGrayLevelEmphasis',
-                    #'rTHA_original_glszm_LargeAreaHighGrayLevelEmphasis',
-                #]
-                x_img_train = x_img_train[selected]
-                x_img_test = x_img_test[selected]
+                
+                elif type(feature_selection) == list:
+                    selected = feature_selection
+                    x_img_train = x_img_train[selected]
+                    x_img_test = x_img_test[selected]
                 
                 #x_img_train = x_img_train.join(x_param_train)
                 #x_img_test = x_img_test.join(x_param_test)

@@ -92,7 +92,7 @@ def preprocANTs(file_name):
 
     key_list = data['KEY'].tolist()
 
-    wf = Workflow(name='ants4', base_dir=os.path.abspath('tmp'))
+    wf = Workflow(name='ants5', base_dir=os.path.abspath('tmp'))
 
     info_src = Node(util.IdentityInterface(fields=['key']), name='info_src')
     info_src.iterables = ('key', key_list)
@@ -127,12 +127,15 @@ def preprocANTs(file_name):
         (info_src, raw_src, [('key', 'key')]),
         (raw_src, reg, [('raw', 'moving_image')]),
         (info_src, sinker, [('key', 'container')]),
-        (reg, sinker, [('warped_image', 'ants4.@warped_image')]),
+        (reg, sinker, [('warped_image', 'ants5.@warped_image'),
+                       ('inverse_warp_field', 'ants5.@inverse_warp_field'),
+                       ('forward_warp_field', 'ants5.@forward_warp_field'),
+                       ('out_matrix', 'ants5.@out_matrix'),]),
     ])
 
     wf.run()
     
-    data['ANTs_Reg_4'] = data['IMG_ROOT'] + os.sep + 'ants4' + os.sep + 'reg.nii.gz'
+    data['ANTs_Reg_5'] = data['IMG_ROOT'] + os.sep + 'ants5' + os.sep + 'reg.nii.gz'
     #antsAtroposN4.sh -d 3 -a testWarped.nii.gz -x ../PD25/PD25-atlas-mask-1mm.nii.gz -o seg -c 3 -s nii -p tpm%d.nii.gz -y 2 -y 3 -w 0.25 
     
     writePandas(file_name, data)
