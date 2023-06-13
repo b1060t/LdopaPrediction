@@ -1,6 +1,7 @@
 data
 tmp
 PD25*
+AAL3
 .ipynb_checkpoints
 ref.py
 test*

@@ -9,9 +9,9 @@ import glob
 
 #gen_pat_roi()
 #genSubjTextureFeatureByROI('pat_data', 'fmriprep_native')
-genSubjTextureFeature('pat_data', 'ANTs_Reg_4')
-dropByCorrelation('pat_data', 'pat_ANTs_Reg_4_radiomic', 'CAT')
-#preprocANTs('pat_data')
+#genSubjTextureFeature('pat_data', 'ANTs_Reg_4')
+#dropByCorrelation('pat_data', 'pat_ANTs_Reg_4_radiomic', 'CAT')
+preprocANTs('pat_data')
 #ImageNormalization('pat_data', 'ANTs_Reg', 'ANTs_Reg_Norm', 'PD25/PD25-atlas-mask-1mm.nii.gz')
 #ImageNormalization('pat_data', 'ANTs_Reg', 'ANTs_Reg_MinMax', 'PD25/PD25-atlas-mask-1mm.nii.gz')
 #dropByCorrelation('pat_data', 'pat_fmriprep_native_radiomic', 'CAT')

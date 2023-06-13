@@ -84,11 +84,12 @@ def preprocANTs(file_name):
     fsl.FSLCommand.set_default_output_type('NIFTI')
     import nipype.interfaces.utility as util
     from nipype.interfaces.fsl import BET, FAST, ApplyMask
-    from nipype.interfaces.ants import RegistrationSynQuick
+    from nipype.interfaces.ants import RegistrationSynQuick, ApplyTransforms, Atropos
     from nipype.interfaces.spm import Smooth
     import nipype.interfaces.io as nio
     
     data = getPandas(file_name)
+    data = data.iloc[:1]
 
     key_list = data['KEY'].tolist()
 
@@ -112,6 +113,30 @@ def preprocANTs(file_name):
     reg.inputs.fixed_image = os.path.abspath(os.path.join('PD25', 'PD25-T1MPRAGE-template-1mm.nii.gz'))
     reg.inputs.num_threads = 1
 
+    mat = Node(util.Merge(2), name='mat')
+
+    transform = Node(ApplyTransforms(), name='transform')
+    transform.inputs.input_image = os.path.abspath(os.path.join('PD25', 'PD25-subcortical-1mm.nii.gz'))
+    transform.inputs.interpolation = 'NearestNeighbor'
+    transform.inputs.invert_transform_flags = [True, False]
+
+    atropos = Node(Atropos(likelihood_model='Gaussian', save_posteriors=True, mrf_smoothing_factor=0.2, mrf_radius=[1, 1, 1], n_iterations=5, convergence_threshold=0.000001, posterior_formulation='Socrates', use_mixture_model_proportions=True), name='atropos')
+    #atropos = Node(Atropos(save_posteriors=True), name='atropos')
+    atropos.inputs.dimension = 3
+    atropos.inputs.mask_image = os.path.abspath(os.path.join('PD25', 'PD25-atlas-mask-1mm.nii.gz'))
+    atropos.inputs.number_of_tissue_classes = 3
+    atropos.inputs.initialization = 'PriorProbabilityImages'
+    atropos.inputs.prior_image = os.path.abspath(os.path.join('data', 'bin', 'tpm%02d.nii.gz'))
+    atropos.inputs.prior_weighting = 0.55
+
+    gm_selector = Node(util.Select(index=[0]), name='gm_selector')
+
+    smth = Node(fsl.Smooth(), name='smth')
+    smth.inputs.fwhm = 4
+    
+    transform_pos = Node(ApplyTransforms(), name='transform_pos')
+    transform_pos.inputs.invert_transform_flags = [True, False]
+
     sinker = Node(nio.DataSink(), name='sinker')
     sinker.inputs.base_directory = os.path.abspath(os.path.join('data', 'subj'))
     sinker.inputs.parameterization = False
@@ -127,18 +152,49 @@ def preprocANTs(file_name):
         (info_src, raw_src, [('key', 'key')]),
         (raw_src, reg, [('raw', 'moving_image')]),
         (info_src, sinker, [('key', 'container')]),
+        (reg, mat, [('inverse_warp_field', 'in2'),
+                     ('out_matrix', 'in1')]),
+        (reg, atropos, [('warped_image', 'intensity_images')]),
+        (raw_src, transform, [('raw', 'reference_image')]),
+        (mat, transform, [('out', 'transforms')]),
+        (atropos, gm_selector, [('posteriors', 'inlist')]),
+        (gm_selector, smth, [('out', 'in_file')]),
         (reg, sinker, [('warped_image', 'ants5.@warped_image'),
                        ('inverse_warp_field', 'ants5.@inverse_warp_field'),
                        ('forward_warp_field', 'ants5.@forward_warp_field'),
                        ('out_matrix', 'ants5.@out_matrix'),]),
+        (transform, sinker, [('output_image', 'ants5.@transformed_image')]),
+        (atropos, sinker, [('classified_image', 'ants5.@classified_image'),
+                           ('posteriors', 'ants5.@posteriors')]),
+        (smth, sinker, [('smoothed_file', 'ants5.@smoothed_file')]),
     ])
 
     wf.run()
     
     data['ANTs_Reg_5'] = data['IMG_ROOT'] + os.sep + 'ants5' + os.sep + 'reg.nii.gz'
+    data['ANTs_5_inverse'] = data['IMG_ROOT'] + os.sep + 'ants5' + os.sep + 'transform1InverseWarp.nii.gz'
+    data['ANTs_5_forward'] = data['IMG_ROOT'] + os.sep + 'ants5' + os.sep + 'transform1Warp.nii.gz'
+    data['ANTs_5_affine'] = data['IMG_ROOT'] + os.sep + 'ants5' + os.sep + 'transform0GenericAffine.mat'
+    data['ANTs_5_native_subcortical_ROI'] = data['IMG_ROOT'] + os.sep + 'ants5' + os.sep + 'PD25-subcortical-1mm_trans.nii.gz'
+
+    #if seg:
+        #mask = 'PD25/PD25-atlas-mask-1mm.nii.gz'
+        #tpms = 'data/bin/tpm%d.nii.gz'
+        #mask = os.path.abspath(mask)
+        #tpms = os.path.abspath(tpms)
+        #regs = data['ANTs_Reg_5'].tolist()
+        #roots = data['IMG_ROOT'].tolist()
+        #regs = [os.path.abspath(reg) for reg in regs]
+        #roots = [os.path.abspath(root) for root in roots]
+        #roots = [os.path.join(root, 'ants5') for root in roots]
+        #for i in range(len(regs)):
+            #os.chdir(roots[i])
+            #print('Working on %s' % regs[i])
+            #cmd = 'antsAtroposN4.sh -d 3 -a %s -x %s -o seg -c 3 -s nii -p %s -y 2 -y 3 -w 0.25' % (regs[i], mask, tpms)
+            #os.system(cmd)
     #antsAtroposN4.sh -d 3 -a testWarped.nii.gz -x ../PD25/PD25-atlas-mask-1mm.nii.gz -o seg -c 3 -s nii -p tpm%d.nii.gz -y 2 -y 3 -w 0.25 
     
-    writePandas(file_name, data)
+    #writePandas(file_name, data)
 
 def preprocAtropos(file_name):
     data = getPandas(file_name)

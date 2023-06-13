@@ -33,3 +33,11 @@ def writeData(name, data):
 def writeConfig(name, data):
     with open(os.path.join('config', name+'.json'), 'w+', encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+
+def writeGraph(name, data):
+    with open(os.path.join('data', 'json', 'graph', name+'.json'), 'w+', encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+def getGraph(name):
+    data = pd.read_json(os.path.join('data', 'json', 'graph', name+'.json'))
+    return data
