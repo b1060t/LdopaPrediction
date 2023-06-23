@@ -149,6 +149,20 @@
                 "tag": "ANTs_Reg",
                 "mask_path": "data/bin/subcortical_roi/rGPe.nii"
             }
+        },
+        "graph_weight":
+        {
+            "params":
+            {
+
+            }
+        },
+        "graph_degree":
+        {
+            "params":
+            {
+                
+            }
         }
     }
 }

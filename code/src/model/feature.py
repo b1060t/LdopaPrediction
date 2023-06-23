@@ -6,7 +6,7 @@ from scipy.stats import zscore
 from sklearn.decomposition import PCA, FastICA
 import sys
 sys.path.append('..')
-from src.utils.data import getPandas
+from src.utils.data import getPandas, getGraph, getDict
 
 def load_img(rec, img_path_tag):
     img_data = np.array(nib.load(rec[img_path_tag]).get_fdata())
@@ -301,6 +301,56 @@ def gen_filtered_voxel(data, train_idx, test_idx, params):
     vox_filtered_test = pd.DataFrame(pca_arr[sep:], columns=['VOX_{}'.format(i+1) for i in range(len(pca_arr[0]))])
     return vox_filtered_train, vox_filtered_test
 
+def load_graph_weight(data, train_idx, test_idx, params):
+    roi_list = list(getDict('aal').keys())
+    import networkx as nx
+    keys = data.iloc[train_idx]['KEY'].tolist()
+    edge_list = [getGraph(key) for key in keys]
+    train_graphs = []
+    for i in range(len(edge_list)):
+        edges = [(e[0], e[1], {'weight': e[2]}) for e in edge_list[i]]
+        graph = nx.Graph()
+        graph.add_nodes_from(roi_list)
+        graph.add_edges_from(edges)
+        train_graphs.append(graph)
+    keys = data.iloc[test_idx]['KEY'].tolist()
+    edge_list = [getGraph(key) for key in keys]
+    test_graphs = []
+    for i in range(len(edge_list)):
+        edges = [(e[0], e[1], {'weight': e[2]}) for e in edge_list[i]]
+        graph = nx.Graph()
+        graph.add_nodes_from(roi_list)
+        graph.add_edges_from(edges)
+        test_graphs.append(graph)
+    intersection = nx.intersection_all(train_graphs + test_graphs)
+    train_vals = [[g[roi_pair[0]][roi_pair[1]]['weight'] for roi_pair in intersection.edges] for g in train_graphs]
+    train_vals = np.array(train_vals)
+    test_vals = [[g[roi_pair[0]][roi_pair[1]]['weight'] for roi_pair in intersection.edges] for g in test_graphs]
+    test_vals = np.array(test_vals)
+    cols = ['{}_{}'.format(roi_pair[0], roi_pair[1]) for roi_pair in intersection.edges]
+    train_vals = pd.DataFrame(train_vals, columns=cols)
+    test_vals = pd.DataFrame(test_vals, columns=cols)
+    return train_vals, test_vals
+
+def load_node_degree(data, train_idx, test_idx, params):
+    train_keys = data.iloc[train_idx]['KEY'].tolist()
+    test_keys = data.iloc[test_idx]['KEY'].tolist()
+    roi_list = list(getDict('aal').keys())
+    col_list = ['{}_degree'.format(roi) for roi in roi_list]
+    #col_list = ['sigma']
+    train_df = pd.DataFrame(columns=col_list)
+    test_df = pd.DataFrame(columns=col_list)
+    degrees = getPandas('pat_nodal')
+    for key in train_keys:
+        train_df = train_df.append(degrees[degrees['KEY'] == key], ignore_index=True)
+    for key in test_keys:
+        test_df = test_df.append(degrees[degrees['KEY'] == key], ignore_index=True)
+    train_df = train_df[col_list]
+    test_df = test_df[col_list]
+    #train_df = train_df.drop(['KEY'], axis=1)
+    #test_df = test_df.drop(['KEY'], axis=1)
+    return train_df, test_df
+
 Feature_LUT = {
     'ica_voxel_online': gen_voxel_ica_online,
     'ica_feature_online': gen_feature_ica_online,
@@ -321,5 +371,8 @@ Feature_LUT = {
     'surf_info': load_surface,
     'malpem_vol': load_malpemvol,
 
-    'pca_rTHA_masked_voxel_online': gen_masked_voxel_pca_online
+    'pca_rTHA_masked_voxel_online': gen_masked_voxel_pca_online,
+
+    'graph_weight': load_graph_weight,
+    'graph_degree': load_node_degree
 }

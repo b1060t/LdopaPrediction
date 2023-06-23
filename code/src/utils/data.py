@@ -39,5 +39,6 @@ def writeGraph(name, data):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 def getGraph(name):
-    data = pd.read_json(os.path.join('data', 'json', 'graph', name+'.json'))
-    return data
+    with open(os.path.join('data', 'json', 'graph', name+'.json'), 'r', encoding="utf-8") as f:
+        data = json.load(f)
+        return data

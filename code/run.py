@@ -3,6 +3,7 @@ from src.feature.texture import genTextureFeature, dropByCorrelation, genSubjTex
 from src.feature.surface import surfCAT12
 from src.utils.data import getPandas, writePandas, getConfig
 from process.preproc_fmriprep import build_pat_bids, build_hc_bids, run_fmriprep, gen_pat_roi
+from src.feature.network import genKLS, thresholdGraph, genNodalFeature
 import os
 os.chdir('..')
 import glob
@@ -11,7 +12,10 @@ import glob
 #genSubjTextureFeatureByROI('pat_data', 'fmriprep_native')
 #genSubjTextureFeature('pat_data', 'ANTs_Reg_4')
 #dropByCorrelation('pat_data', 'pat_ANTs_Reg_4_radiomic', 'CAT')
-preprocANTs('pat_data')
+#preprocANTs('pat_data')
+#genKLS('pat_data', 'aal')
+genNodalFeature('pat_data')
+#thresholdGraph(0.1)
 #ImageNormalization('pat_data', 'ANTs_Reg', 'ANTs_Reg_Norm', 'PD25/PD25-atlas-mask-1mm.nii.gz')
 #ImageNormalization('pat_data', 'ANTs_Reg', 'ANTs_Reg_MinMax', 'PD25/PD25-atlas-mask-1mm.nii.gz')
 #dropByCorrelation('pat_data', 'pat_fmriprep_native_radiomic', 'CAT')
