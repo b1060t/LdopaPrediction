@@ -336,8 +336,9 @@ def load_node_degree(data, train_idx, test_idx, params):
     train_keys = data.iloc[train_idx]['KEY'].tolist()
     test_keys = data.iloc[test_idx]['KEY'].tolist()
     roi_list = list(getDict('aal').keys())
-    col_list = ['{}_degree'.format(roi) for roi in roi_list]
-    #col_list = ['sigma']
+    #col_list = ['{}_degree'.format(roi) for roi in roi_list]
+    col_list = params['global_cols']
+    col_list = col_list + ['{}_{}'.format(roi, col) for roi in roi_list for col in params['nodal_cols']]
     train_df = pd.DataFrame(columns=col_list)
     test_df = pd.DataFrame(columns=col_list)
     degrees = getPandas('pat_nodal')

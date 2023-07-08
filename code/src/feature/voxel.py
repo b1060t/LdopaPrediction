@@ -18,3 +18,6 @@ def filter_by_threshold(filename, pathlabel, threshold):
     mean_img[mean_img >= threshold] = 1
     img_list = [img * mean_img for img in img_list]
     return mean_img
+
+def genSubcorticalVolume(filename):
+    pass

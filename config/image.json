@@ -65,35 +65,35 @@
         {
             "params":
             {
-                "json_tag": "pat_ANTs_Reg_radiomic"
+                "json_tag": "pat_ANTs_Reg_radiomic_CAT_0.8"
             }
         },
         "iteration_2":
         {
             "params":
             {
-                "json_tag": "pat_ANTs_Reg_2_radiomic"
+                "json_tag": "pat_ANTs_Reg_2_radiomic_CAT_0.8"
             }
         },
         "iteration_3":
         {
             "params":
             {
-                "json_tag": "pat_ANTs_Reg_3_radiomic"
+                "json_tag": "pat_ANTs_Reg_3_radiomic_CAT_0.8"
             }
         },
         "iteration_4":
         {
             "params":
             {
-                "json_tag": "pat_ANTs_Reg_4_radiomic"
+                "json_tag": "pat_ANTs_Reg_4_radiomic_CAT_0.8"
             }
         },
         "t1_radiomic":
         {
             "params":
             {
-                "json_tag": "pat_ANTs_Reg_4_radiomic_CAT_0.8"
+                "json_tag": "pat_ANTs_Reg_radiomic_CAT_0.8"
             }
         },
         "gm_radiomic":
@@ -161,7 +161,22 @@
         {
             "params":
             {
-                
+                "global_cols": [
+                    "cp",
+                    "ge",
+                    "le",
+                    "cpl",
+                    "mod",
+                    "sigma",
+                    "ne",
+                    "spl"
+                ],
+                "nodal_cols": [
+                    "dc",
+                    "bc",
+                    "ncc",
+                    "degree"
+                ]
             }
         }
     }

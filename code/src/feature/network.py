@@ -105,6 +105,7 @@ def genNodalFeature(filename):
     degree_criterion = 2 * np.log(len(roi_list))
     thresholds = np.linspace(0.5, 0.01, 50)
     network = {}
+    consensus = []
     for idx in idxs:
         print('Processing {}'.format(data.iloc[idx]['KEY']))
         graph = None
@@ -158,10 +159,6 @@ def genNodalFeature(filename):
         # Characteristic Path Length
         cpl = nx.average_shortest_path_length(subg)
         network[key]['cpl'] = cpl
-        # Normalized Characteristic Path Length
-
-        # Normalized Clustering Coefficient
-
         # Modularity Score
         comm = nx.community.louvain_communities(g)
         mod = nx.community.modularity(g, comm)
@@ -171,15 +168,18 @@ def genNodalFeature(filename):
         network[key]['sigma'] = sigma
 
         # Nodal Efficiency
-        nes = {m+'_'+n: nx.efficiency(subg, m, n) for m in connected_nodes for n in connected_nodes}
+        nes = {m+'_'+n: 0 if m == n else nx.efficiency(subg, m, n) for m in connected_nodes for n in connected_nodes}
         network[key]['ne'] = np.sum(list(nes.values()))
         #for edge, ne in nes.items():
             #network[key][edge+'_ne'] = ne
         # Shortest Path Length
-        spls = {m+'_'+n: nx.shortest_path_length(subg, m, n) for m in connected_nodes for n in connected_nodes}
+        spls = {m+'_'+n: 0 if m == n else nx.shortest_path_length(subg, m, n) for m in connected_nodes for n in connected_nodes}
         network[key]['spl'] = np.sum(list(spls.values()))
         #for edge, spl in spls.items():
             #network[key][edge+'_spl'] = spl
+
+        # Consensus Connections
+        consensus.append(subg.edges())
 
     network_df = pd.DataFrame.from_dict(network, orient='index')
     writePandas('pat_nodal', network_df)
