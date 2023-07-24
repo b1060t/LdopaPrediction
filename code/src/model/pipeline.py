@@ -63,15 +63,16 @@ def run(dataname, TASKS, FEATURES, log_func=print, plot_flag=True, feature_selec
                     x_img_train = x_img_train.join(x_fe_train.reset_index(drop=True))
                     x_img_test = x_img_test.join(x_fe_test.reset_index(drop=True))
                 
-                scaler = MinMaxScaler()
-                x_img_train = pd.DataFrame(scaler.fit_transform(x_img_train, y_train), columns=x_img_train.columns)
-                x_img_test = pd.DataFrame(scaler.transform(x_img_test), columns=x_img_test.columns)
+                #scaler = MinMaxScaler()
+                #x_img_train = pd.DataFrame(scaler.fit_transform(x_img_train, y_train), columns=x_img_train.columns)
+                #x_img_test = pd.DataFrame(scaler.transform(x_img_test), columns=x_img_test.columns)
             
                 isContinuous = task['continuous']
                 if feature_selection == True:
                     ##mRMR
                     selected = mrmr_classif(X=x_img_train, y=y_train, K=50) if not isContinuous else mrmr_regression(X=x_img_train, y=y_train, K=50)
                     log_func('mRMR Selected features: {}\n'.format(selected))
+                    #selected = x_img_train.columns
                     ##LASSO
                     la = LassoCV(cv=5, random_state=random_state, max_iter=10000)
                     la.fit(x_img_train[selected], y_train)

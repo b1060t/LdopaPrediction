@@ -39,6 +39,13 @@ def load_volume(data, train_idx, test_idx, params):
     volume_test = df_volume.iloc[test_idx]
     return volume_train, volume_test
 
+def load_mednet(data, train_idx, test_idx, params):
+    df_radiomic = getPandas(params['json_tag'])
+    df_radiomic = df_radiomic.drop(['KEY'], axis=1)
+    radiomic_train = df_radiomic.iloc[train_idx]
+    radiomic_test = df_radiomic.iloc[test_idx]
+    return radiomic_train, radiomic_test
+
 def load_roivol(data, train_idx, test_idx, params):
     df_roivol = getPandas(params['json_tag'])
     # only use columns contains hammer
@@ -343,9 +350,11 @@ def load_node_degree(data, train_idx, test_idx, params):
     test_df = pd.DataFrame(columns=col_list)
     degrees = getPandas('pat_nodal')
     for key in train_keys:
-        train_df = train_df.append(degrees[degrees['KEY'] == key], ignore_index=True)
+        #train_df = train_df.append(degrees[degrees['KEY'] == key], ignore_index=True)
+        train_df = pd.concat([train_df, degrees[degrees['KEY'] == key]], axis=0)
     for key in test_keys:
-        test_df = test_df.append(degrees[degrees['KEY'] == key], ignore_index=True)
+        #test_df = test_df.append(degrees[degrees['KEY'] == key], ignore_index=True)
+        test_df = pd.concat([test_df, degrees[degrees['KEY'] == key]], axis=0)
     train_df = train_df[col_list]
     test_df = test_df[col_list]
     #train_df = train_df.drop(['KEY'], axis=1)
@@ -375,5 +384,7 @@ Feature_LUT = {
     'pca_rTHA_masked_voxel_online': gen_masked_voxel_pca_online,
 
     'graph_weight': load_graph_weight,
-    'graph_degree': load_node_degree
+    'graph_degree': load_node_degree,
+    
+    'mednet_features': load_mednet
 }

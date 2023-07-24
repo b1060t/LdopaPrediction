@@ -178,6 +178,13 @@
                     "degree"
                 ]
             }
+        },
+        "mednet_features":
+        {
+            "params":
+            {
+                "json_tag": "pat_resnet_8"
+            }
         }
     }
 }
